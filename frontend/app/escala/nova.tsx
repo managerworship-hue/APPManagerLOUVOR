@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
+import { DatePickerField, TimePickerField } from '@/src/components/DateTimePickerField';
 import { colors, radius, font, spacing } from '@/src/theme';
 
 type Song = { id: string; title: string; artist: string };
@@ -85,10 +86,10 @@ export default function NovaEscala() {
 
           <View style={{ flexDirection: 'row', gap: spacing.sm }}>
             <Field label="DATA" testID="scale-date-input" style={{ flex: 1 }}>
-              <TextInput value={date} onChangeText={setDate} placeholder="2026-12-25" style={styles.input} placeholderTextColor={colors.textMuted} maxLength={10} testID="scale-date-input-field" />
+              <DatePickerField value={date} onChange={setDate} testID="scale-date-input-field" />
             </Field>
             <Field label="HORÁRIO" testID="scale-time-input" style={{ flex: 1 }}>
-              <TextInput value={time} onChangeText={setTime} placeholder="19:00" style={styles.input} placeholderTextColor={colors.textMuted} testID="scale-time-input-field" />
+              <TimePickerField value={time} onChange={setTime} testID="scale-time-input-field" />
             </Field>
           </View>
 
