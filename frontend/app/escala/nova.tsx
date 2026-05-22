@@ -24,6 +24,7 @@ export default function NovaEscala() {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [songQuery, setSongQuery] = useState('');
   const [saving, setSaving] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -103,32 +104,74 @@ export default function NovaEscala() {
 
           <View style={styles.sectionRow}>
             <Text style={styles.sectionTitle}>Repertório ({selectedSongs.length})</Text>
-            <TouchableOpacity
-              testID="add-new-song-button"
-              style={styles.addBtn}
-              onPress={() => router.push('/musica/nova')}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="add" size={14} color={colors.primary} />
-              <Text style={styles.addBtnText}>Nova música</Text>
-            </TouchableOpacity>
+            {selectedSongs.length > 0 && (
+              <TouchableOpacity
+                testID="clear-selected-songs"
+                onPress={() => setSelectedSongs([])}
+                style={styles.clearBtn}
+              >
+                <Text style={styles.clearBtnText}>Limpar</Text>
+              </TouchableOpacity>
+            )}
           </View>
-          <View style={styles.chips}>
-            {songs.length === 0 && <Text style={styles.muted}>Nenhuma música no repertório.</Text>}
-            {songs.map((s) => {
-              const sel = selectedSongs.includes(s.id);
-              return (
-                <TouchableOpacity
-                  key={s.id}
-                  testID={`pick-song-${s.id}`}
-                  style={[styles.chip, sel && styles.chipSelected]}
-                  onPress={() => toggle(selectedSongs, setSelectedSongs, s.id)}
-                >
-                  <Text style={[styles.chipText, sel && styles.chipTextSelected]} numberOfLines={1}>{s.title}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+
+          {songs.length === 0 ? (
+            <View style={styles.emptyBox}>
+              <Text style={styles.muted}>Nenhuma música no repertório.</Text>
+              <TouchableOpacity
+                testID="goto-create-song"
+                onPress={() => router.push('/musica/nova')}
+                style={styles.emptyAction}
+              >
+                <Ionicons name="add" size={14} color={colors.primary} />
+                <Text style={styles.addBtnText}>Cadastrar primeira música</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <View style={styles.searchWrap}>
+                <Ionicons name="search" size={16} color={colors.textMuted} />
+                <TextInput
+                  testID="search-songs-input"
+                  value={songQuery}
+                  onChangeText={setSongQuery}
+                  placeholder="Buscar música no repertório..."
+                  placeholderTextColor={colors.textMuted}
+                  style={styles.searchInput}
+                />
+                {songQuery ? (
+                  <TouchableOpacity onPress={() => setSongQuery('')} testID="clear-search">
+                    <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              <View style={styles.chips}>
+                {(() => {
+                  const q = songQuery.trim().toLowerCase();
+                  const filtered = q
+                    ? songs.filter(s => s.title.toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q))
+                    : songs;
+                  if (filtered.length === 0) {
+                    return <Text style={styles.muted}>Nenhuma música encontrada para “{songQuery}”.</Text>;
+                  }
+                  return filtered.map((s) => {
+                    const sel = selectedSongs.includes(s.id);
+                    return (
+                      <TouchableOpacity
+                        key={s.id}
+                        testID={`pick-song-${s.id}`}
+                        style={[styles.chip, sel && styles.chipSelected]}
+                        onPress={() => toggle(selectedSongs, setSelectedSongs, s.id)}
+                      >
+                        {sel && <Ionicons name="checkmark" size={12} color="#fff" />}
+                        <Text style={[styles.chipText, sel && styles.chipTextSelected]} numberOfLines={1}>{s.title}</Text>
+                      </TouchableOpacity>
+                    );
+                  });
+                })()}
+              </View>
+            </>
+          )}
 
           <View style={styles.sectionRow}>
             <Text style={styles.sectionTitle}>Músicos ({selectedMembers.length})</Text>
@@ -202,7 +245,7 @@ const styles = StyleSheet.create({
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, marginBottom: 4 },
   addBtnText: { fontSize: font.small, color: colors.primary, fontWeight: '600' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.full, maxWidth: '100%' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.full, maxWidth: '100%' },
   chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { color: colors.text, fontSize: font.caption, fontWeight: '500' },
   chipTextSelected: { color: '#fff', fontWeight: '700' },
