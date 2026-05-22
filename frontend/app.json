@@ -19,10 +19,15 @@
       "edgeToEdgeEnabled": true
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
+  "bundler": "metro",
+  "output": "static",
+  "favicon": "./assets/images/favicon.png",
+  "name": "Manager Louvor",
+  "shortName": "Louvor",
+  "description": "Gerenciamento do ministério de louvor",
+  "themeColor": "#000000",
+  "backgroundColor": "#000000"
+}
     "plugins": [
       "expo-router",
       [
