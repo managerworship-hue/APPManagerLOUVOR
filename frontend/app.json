@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "Manager Louvor",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,15 +19,15 @@
       "edgeToEdgeEnabled": true
     },
     "web": {
-  "bundler": "metro",
-  "output": "static",
-  "favicon": "./assets/images/favicon.png",
-  "name": "Manager Louvor",
-  "shortName": "Louvor",
-  "description": "Gerenciamento do ministério de louvor",
-  "themeColor": "#000000",
-  "backgroundColor": "#000000"
-}
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png",
+      "name": "Manager Louvor",
+      "shortName": "Louvor",
+      "description": "Gerenciamento do ministério de louvor",
+      "themeColor": "#000000",
+      "backgroundColor": "#000000"
+    },
     "plugins": [
       "expo-router",
       [
