@@ -256,7 +256,7 @@ async def signup(req: SignupReq):
     return AuthResponse(
         token=make_token(user["_id"], ministry["_id"]),
         user=serialize_user(user),
-        ministry=serialize_ministry(ministry),
+        ministry=serialize_ministry(ministry, include_api_key=(role == ROLE_LEADER)),
     )
 
 @api_router.post("/auth/login", response_model=AuthResponse)
