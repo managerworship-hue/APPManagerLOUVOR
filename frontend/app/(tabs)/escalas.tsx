@@ -1,0 +1,165 @@
+import React, { useCallback, useState } from 'react';
+import {
+  View, Text, FlatList, StyleSheet, TouchableOpacity,
+  ActivityIndicator, RefreshControl,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { api } from '@/src/api/client';
+import { useAuth } from '@/src/context/AuthContext';
+import { colors, radius, font, spacing } from '@/src/theme';
+import { formatDay, formatMonth } from '@/src/utils/date';
+
+type Scale = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  song_ids: string[];
+  musician_ids: string[];
+};
+
+export default function ScalesScreen() {
+  const router = useRouter();
+  const { hasPermission } = useAuth();
+  const [items, setItems] = useState<Scale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const r = await api<Scale[]>('/scales');
+      setItems(r);
+    } catch {} finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const canEdit = hasPermission('edit_scales');
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Escalas</Text>
+          <Text style={styles.subtitle}>{items.length} evento{items.length !== 1 ? 's' : ''}</Text>
+        </View>
+        {canEdit && (
+          <TouchableOpacity
+            testID="new-scale-button"
+            style={styles.fabSmall}
+            onPress={() => router.push('/escala/nova')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="add" size={22} color="#fff" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {loading ? (
+        <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+      ) : items.length === 0 ? (
+        <View style={styles.empty}>
+          <Ionicons name="calendar-outline" size={40} color={colors.textMuted} />
+          <Text style={styles.emptyText}>Nenhuma escala cadastrada</Text>
+          {canEdit && (
+            <TouchableOpacity
+              style={styles.emptyBtn}
+              onPress={() => router.push('/escala/nova')}
+              testID="empty-new-scale-button"
+            >
+              <Text style={styles.emptyBtnText}>Criar primeira escala</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : (
+        <FlatList
+          data={items}
+          keyExtractor={(i) => i.id}
+          contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
+          ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              testID={`scale-item-${item.id}`}
+              style={styles.row}
+              onPress={() => router.push(`/escala/${item.id}`)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.dateBlock}>
+                <Text style={styles.day}>{formatDay(item.date)}</Text>
+                <Text style={styles.month}>{formatMonth(item.date)}</Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle} numberOfLines={1}>{item.title}</Text>
+                <View style={styles.metaRow}>
+                  {item.time ? (
+                    <View style={styles.metaPill}>
+                      <Ionicons name="time-outline" size={11} color={colors.textSecondary} />
+                      <Text style={styles.metaText}>{item.time}</Text>
+                    </View>
+                  ) : null}
+                  {item.location ? (
+                    <View style={styles.metaPill}>
+                      <Ionicons name="location-outline" size={11} color={colors.textSecondary} />
+                      <Text style={styles.metaText} numberOfLines={1}>{item.location}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                <View style={styles.statsRow}>
+                  <Text style={styles.statsText}>{item.song_ids.length} música{item.song_ids.length !== 1 ? 's' : ''}</Text>
+                  <Text style={styles.statsText}>·</Text>
+                  <Text style={styles.statsText}>{item.musician_ids.length} músico{item.musician_ids.length !== 1 ? 's' : ''}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.bg },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.md, paddingBottom: spacing.sm },
+  title: { fontSize: font.h1, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
+  subtitle: { fontSize: font.caption, color: colors.textSecondary },
+  fabSmall: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  emptyText: { fontSize: font.body, color: colors.textSecondary, marginTop: spacing.md },
+  emptyBtn: { marginTop: spacing.lg, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: radius.full },
+  emptyBtnText: { color: '#fff', fontWeight: '600' },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1, borderColor: colors.border,
+    gap: spacing.md,
+  },
+  dateBlock: { alignItems: 'center', minWidth: 44 },
+  day: { fontSize: 26, fontWeight: '700', color: colors.gold, letterSpacing: -1, lineHeight: 30 },
+  month: { fontSize: font.small, color: colors.textSecondary, fontWeight: '700', letterSpacing: 1 },
+  divider: { width: 1, alignSelf: 'stretch', backgroundColor: colors.border },
+  rowTitle: { fontSize: font.body, fontWeight: '700', color: colors.text, marginBottom: 4 },
+  metaRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
+  metaPill: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metaText: { fontSize: font.small, color: colors.textSecondary },
+  statsRow: { flexDirection: 'row', gap: 6, marginTop: 4 },
+  statsText: { fontSize: font.small, color: colors.textMuted },
+});

@@ -1,0 +1,46 @@
+{
+  "summary": "Backend-only testing for LouvorApp. Created pytest suite covering health, signup (leader & member), login, /auth/me, ministry endpoints, member management, api-key rotation, songs CRUD + permission, scales CRUD + permission, announcements + permission, stats, multi-tenancy isolation across two different ministries, and external X-API-Key endpoints (ministry, songs, scales upcoming with hydrated setlist + BPM, scale detail with lyrics). 34/35 tests pass. Found 1 real bug: POST /api/auth/signup leaks ministry.api_key in the response to members joining via invite_code (login and GET /api/ministry correctly hide it).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/auth/signup (invite_code flow)",
+        "issue": "Response includes ministry.api_key for members who join via invite_code. serialize_ministry() is called without include_api_key=(role==leader). Login and GET /api/ministry already handle this correctly. Fix: in signup(), use serialize_ministry(ministry, include_api_key=(role == ROLE_LEADER)). This is a security-relevant leak because members should not have access to the integration X-API-Key."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/test_louvorapp_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix signup endpoint: pass include_api_key=(role == ROLE_LEADER) to serialize_ministry in POST /api/auth/signup so that members joining via invite_code do NOT receive ministry.api_key in the response.",
+    "(Optional) Add a regression test once fixed (test_signup_member_via_invite_code already encodes the expected behavior).",
+    "(Optional cosmetic) The backend log emits a harmless passlib/bcrypt warning ('module bcrypt has no attribute __about__'). Functionality is not affected, but pinning bcrypt<4 or upgrading passlib will silence it."
+  ],
+  "critical_code_review_comments": [
+    "server.py signup() returns serialize_ministry(ministry) without role gating -> api_key always exposed (bug).",
+    "Member-update PUT /ministry/members/{id} allows leader to set permissions even when role is also being upgraded to leader; logic is fine but the conditional 'if updates.get(\"role\") != ROLE_LEADER' relies on key being set in the same call; OK in practice.",
+    "All endpoints correctly use ministry_id scoping for multi-tenancy; verified by cross-ministry tests.",
+    "External /external/scales hydrates setlist without lyrics (correct), while /external/scales/{id} includes lyrics (correct).",
+    "server.py is ~635 lines, approaching the recommended 700 limit; consider splitting routers if more endpoints are added.",
+    "MongoDB _id is replaced with string UUIDs (good) and serializers never expose raw _id."
+  ],
+  "updated_files": [
+    "/app/backend/tests/conftest.py (new)",
+    "/app/backend/tests/test_louvorapp_api.py (new)"
+  ],
+  "success_rate": {"backend": "97.1% (34/35)", "frontend": "not tested (backend-only request)"},
+  "seed_data_creation": "Tests create their own TEST_-prefixed ministries, users, songs, scales and announcements via the API. No global seed data was modified. Demo account (demo@louvor.app/demo123) was verified to exist and log in successfully.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Pytest suite is at /app/backend/tests/test_louvorapp_api.py with shared fixtures in conftest.py. Run with: `python -m pytest backend/tests/ -v --junitxml=/app/test_reports/pytest/pytest_results.xml`. Base URL comes from frontend/.env EXPO_PUBLIC_BACKEND_URL. EmailStr rejects .test/.example TLDs - use @example.com. SignupReq.name has min_length=2. After the api_key fix, all 35 tests should pass.",
+  "rca_of_issue": "Bug: members receive ministry.api_key on signup. RCA: In server.py /api/auth/signup handler, the final return uses `serialize_ministry(ministry)` with default include_api_key=True. The function already supports include_api_key=False (used in login and GET /ministry) but signup was missed. Reproduction: POST /api/auth/signup with {name, email, password, invite_code:<valid-code>} -> response.ministry.api_key is populated. Expected: api_key should be None for role=='member'. Mitigation: change line ~259 to `ministry=serialize_ministry(ministry, include_api_key=(role == ROLE_LEADER))`."
+}
