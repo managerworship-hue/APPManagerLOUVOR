@@ -35,10 +35,36 @@ export function DatePickerField({ value, onChange, placeholder = 'Selecionar dat
 
   // Web: native HTML date input
   if (Platform.OS === 'web') {
+    const openPicker = (e: any) => {
+      const input = (e.currentTarget as HTMLElement).querySelector('input');
+      if (input && typeof (input as any).showPicker === 'function') {
+        try { (input as any).showPicker(); } catch {}
+      } else if (input) {
+        input.focus();
+        input.click();
+      }
+    };
     return (
-      <View style={styles.webWrap} testID={testID}>
-        <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} style={styles.webIcon} />
-        {/* @ts-ignore react-native-web passes through DOM input */}
+      // @ts-ignore
+      <div
+        onClick={openPicker}
+        data-testid={testID}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: colors.surface,
+          border: `1px solid ${colors.border}`,
+          borderRadius: radius.md,
+          paddingLeft: spacing.md,
+          paddingRight: spacing.md,
+          minHeight: 50,
+          gap: 8,
+          cursor: 'pointer',
+        }}
+      >
+        <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
+        {/* @ts-ignore */}
         <input
           type="date"
           value={value}
@@ -52,10 +78,13 @@ export function DatePickerField({ value, onChange, placeholder = 'Selecionar dat
             color: value ? colors.text : colors.textMuted,
             backgroundColor: 'transparent',
             fontFamily: 'inherit',
-            padding: 0,
+            padding: '12px 0',
+            cursor: 'pointer',
+            width: '100%',
+            minWidth: 0,
           }}
         />
-      </View>
+      </div>
     );
   }
 
@@ -130,9 +159,35 @@ export function TimePickerField({ value, onChange, placeholder = 'Selecionar hor
   const [show, setShow] = useState(false);
 
   if (Platform.OS === 'web') {
+    const openPicker = (e: any) => {
+      const input = (e.currentTarget as HTMLElement).querySelector('input');
+      if (input && typeof (input as any).showPicker === 'function') {
+        try { (input as any).showPicker(); } catch {}
+      } else if (input) {
+        input.focus();
+        input.click();
+      }
+    };
     return (
-      <View style={styles.webWrap} testID={testID}>
-        <Ionicons name="time-outline" size={18} color={colors.textSecondary} style={styles.webIcon} />
+      // @ts-ignore
+      <div
+        onClick={openPicker}
+        data-testid={testID}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: colors.surface,
+          border: `1px solid ${colors.border}`,
+          borderRadius: radius.md,
+          paddingLeft: spacing.md,
+          paddingRight: spacing.md,
+          minHeight: 50,
+          gap: 8,
+          cursor: 'pointer',
+        }}
+      >
+        <Ionicons name="time-outline" size={18} color={colors.textSecondary} />
         {/* @ts-ignore */}
         <input
           type="time"
@@ -147,10 +202,13 @@ export function TimePickerField({ value, onChange, placeholder = 'Selecionar hor
             color: value ? colors.text : colors.textMuted,
             backgroundColor: 'transparent',
             fontFamily: 'inherit',
-            padding: 0,
+            padding: '12px 0',
+            cursor: 'pointer',
+            width: '100%',
+            minWidth: 0,
           }}
         />
-      </View>
+      </div>
     );
   }
 

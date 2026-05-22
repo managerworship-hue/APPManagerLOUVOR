@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
 import { DatePickerField, TimePickerField } from '@/src/components/DateTimePickerField';
@@ -26,16 +26,16 @@ export default function NovaEscala() {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const [s, m] = await Promise.all([
-        api<Song[]>('/songs'),
-        api<Member[]>('/ministry/members'),
-      ]);
-      setSongs(s);
-      setMembers(m);
-    })();
+  const loadData = useCallback(async () => {
+    const [s, m] = await Promise.all([
+      api<Song[]>('/songs'),
+      api<Member[]>('/ministry/members'),
+    ]);
+    setSongs(s);
+    setMembers(m);
   }, []);
+
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   const toggle = (arr: string[], setter: (v: string[]) => void, id: string) => {
     setter(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
@@ -101,7 +101,18 @@ export default function NovaEscala() {
             <TextInput value={notes} onChangeText={setNotes} placeholder="Notas, instruções, etc." style={[styles.input, styles.textarea]} multiline numberOfLines={3} placeholderTextColor={colors.textMuted} testID="scale-notes-input-field" />
           </Field>
 
-          <Text style={styles.sectionTitle}>Repertório ({selectedSongs.length})</Text>
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>Repertório ({selectedSongs.length})</Text>
+            <TouchableOpacity
+              testID="add-new-song-button"
+              style={styles.addBtn}
+              onPress={() => router.push('/musica/nova')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={14} color={colors.primary} />
+              <Text style={styles.addBtnText}>Nova música</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.chips}>
             {songs.length === 0 && <Text style={styles.muted}>Nenhuma música no repertório.</Text>}
             {songs.map((s) => {
@@ -119,7 +130,18 @@ export default function NovaEscala() {
             })}
           </View>
 
-          <Text style={styles.sectionTitle}>Músicos ({selectedMembers.length})</Text>
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>Músicos ({selectedMembers.length})</Text>
+            <TouchableOpacity
+              testID="add-new-member-button"
+              style={styles.addBtn}
+              onPress={() => router.push('/convidar')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="person-add-outline" size={14} color={colors.primary} />
+              <Text style={styles.addBtnText}>Convidar</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.chips}>
             {members.map((m) => {
               const sel = selectedMembers.includes(m.id);
@@ -176,6 +198,9 @@ const styles = StyleSheet.create({
   },
   textarea: { minHeight: 80, textAlignVertical: 'top' },
   sectionTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text, marginTop: spacing.md, marginBottom: spacing.sm },
+  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: spacing.md, marginBottom: spacing.sm },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, marginBottom: 4 },
+  addBtnText: { fontSize: font.small, color: colors.primary, fontWeight: '600' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.full, maxWidth: '100%' },
   chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
