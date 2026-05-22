@@ -1,0 +1,128 @@
+{
+  "theme_and_archetype": {
+    "domain": "Worship Ministry Management App",
+    "theme": "Light",
+    "archetype": "Archetype 5 (Jewel & Luxury - Light Variant)",
+    "rationale": "The user requested a 'Profissional escuro' (Professional dark) style but applied to a 'claro' (Light) theme. This translates to an elegant, sophisticated aesthetic—bone whites, deep charcoal text, and premium accent colors like deep navy and muted gold. It must feel reverent, organized, and highly reliable for church leaders and musicians."
+  },
+  "typography": {
+    "fonts": {
+      "headings": {
+        "family": "Cabinet Grotesk, sans-serif",
+        "rationale": "A geometric sans with character that looks premium and structured for an app dashboard."
+      },
+      "body": {
+        "family": "Manrope, sans-serif",
+        "rationale": "Highly legible on mobile devices, perfect for dense data like song chords, BPMs, and event lists."
+      }
+    },
+    "hierarchy": {
+      "h1": "text-4xl tracking-tight font-bold",
+      "h2": "text-2xl tracking-tight font-semibold",
+      "h3": "text-xl font-medium",
+      "body": "text-base leading-relaxed",
+      "small_labels": "text-xs tracking-[0.1em] uppercase font-semibold",
+      "caption": "text-sm text-secondary"
+    }
+  },
+  "color_palette": {
+    "background": {
+      "base": "#F9F9F8",
+      "surface": "#FFFFFF",
+      "glass": "bg-white/80 backdrop-blur-xl"
+    },
+    "text": {
+      "primary": "#0F141E",
+      "secondary": "#626773",
+      "muted": "#9CA3AF"
+    },
+    "accents": {
+      "primary": "#1A2B4C",
+      "primary_hover": "#2B406A",
+      "gold": "#C5A059",
+      "gold_hover": "#DFB668",
+      "border": "#E8E8E6"
+    },
+    "status": {
+      "success": "#2E6B4E",
+      "warning": "#B07A25",
+      "error": "#9B2C2C",
+      "info": "#1D4ED8"
+    }
+  },
+  "layout_and_spacing": {
+    "philosophy": "Generous spacing. Mobile-first layout simulating a native app feel on the web. Fixed bottom navigation bar. Content scrolls beneath floating headers.",
+    "spacing_scale": {
+      "screen_padding": "p-4 md:p-8",
+      "card_padding": "p-5 md:p-6",
+      "gap_standard": "gap-4",
+      "gap_large": "gap-8"
+    },
+    "components": {
+      "cards": "bg-white rounded-2xl border border-[#E8E8E6] shadow-[0_4px_24px_rgba(0,0,0,0.02)] overflow-hidden",
+      "buttons": "rounded-full px-6 py-2.5 font-medium transition-all duration-200",
+      "inputs": "rounded-xl border border-[#E8E8E6] bg-[#F9F9F8] focus:ring-2 focus:ring-[#C5A059]/30 focus:border-[#C5A059]",
+      "bottom_nav": "fixed bottom-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl border-t border-[#E8E8E6] flex justify-around items-center z-50 pb-safe"
+    }
+  },
+  "media_and_images": {
+    "rules": "Never use placeholder images. Use the curated URLs below.",
+    "images": {
+      "auth_background": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/115a9cd9-2aae-4df5-9455-01ee93bd395c/images/34b9598bc903ff07386ce04194e6bdd52e2a9b0fa985dcd7c23df233cdb6cd6b.png",
+        "description": "Abstract, elegant bone-white light theme background for the Login and Register screens.",
+        "usage": "Use as a full-screen background image with absolute positioning and cover object-fit behind the auth forms."
+      },
+      "dashboard_hero": {
+        "url": "https://images.unsplash.com/photo-1528828085966-aff4e01c5f2b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2OTV8MHwxfHNlYXJjaHwyfHx3b3JzaGlwJTIwZ3VpdGFyJTIwY29uY2VydHxlbnwwfHx8fDE3Nzk0ODAxNDF8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Silhouettes in worship setting.",
+        "usage": "Use inside the 'Next Event' highlight card on the dashboard with a heavy dark or navy overlay to keep text readable."
+      },
+      "repertoire_placeholder": {
+        "url": "https://images.unsplash.com/photo-1591025810539-a321000cda85?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwxfHxzaGVldCUyMG11c2ljJTIwbm90ZXMlMjBtaW5pbWFsaXN0fGVufDB8fHx8MTc3OTQ4MDE1Nnww&ixlib=rb-4.1.0&q=85",
+        "description": "Minimalist sheet music.",
+        "usage": "Use as a thumbnail or hero image in the Repertoire list or Song detail screen."
+      },
+      "avatars": [
+        {
+          "url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdCUyMGhlYWRzaG90fGVufDB8fHx8MTc3OTQ4MDE1Nnww&ixlib=rb-4.1.0&q=85",
+          "role": "Leader"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1506863530036-1efeddceb993?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdCUyMGhlYWRzaG90fGVufDB8fHx8MTc3OTQ4MDE1Nnww&ixlib=rb-4.1.0&q=85",
+          "role": "Vocal"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdCUyMGhlYWRzaG90fGVufDB8fHx8MTc3OTQ4MDE1Nnww&ixlib=rb-4.1.0&q=85",
+          "role": "Guitar"
+        }
+      ]
+    }
+  },
+  "icons": {
+    "library": "lucide-react",
+    "usage": "Use subtle, thin strokes (stroke-width: 1.5). Core navigation: Home, Calendar (Escalas), Music (Repertório), Users (Equipe), UserCircle (Perfil)."
+  },
+  "specific_screens_instructions": {
+    "auth": "Must be clean. Use the auth_background image with a slight overlay. The login/register card should use glassmorphism (bg-white/80 backdrop-blur-xl). Include options to create ministry or join via 6-char code.",
+    "dashboard_home": "Display the 'Next Scale' as a large premium bento-card at the top (use the dashboard_hero image with an overlay and white text). Below it, display 2x2 grid for stats (members, songs). Followed by an announcements list.",
+    "escalas_events": "Vertical list. The date block (Left) should be separated from the details (Right) by a subtle vertical divider. E.g., '12' (Large font, Gold color) 'NOV' (Small text).",
+    "repertorio_songs": "List items should clearly display Song Name, Artist. Use badges for Key (e.g., 'Tom: G') and BPM. Include icons for external links (YouTube, Cifra).",
+    "equipe_members": "List of team members. Each row has an avatar, name, and instrument/role. Include Shadcn UI Toggle/Switches for permissions (edit_scales, edit_songs, edit_announcements).",
+    "perfil_api_integration": "In the Profile tab, provide a sleek card for the PWA API Integration. Display the 'X-API-Key' in a Shadcn Input (read-only) with a prominent 'Copy' button. Same layout for the Invite Code share screen."
+  },
+  "interactions_and_motion": {
+    "hover_states": "All buttons should have a slight translate-y-[-1px] and shadow elevation on hover. Row items in lists should have a bg-[#F3F2F0] hover effect.",
+    "active_states": "Scale down slightly (scale-95) on click.",
+    "accessibility": "Ensure all interactive elements have focus rings. Contrast ratio for text must be at least 4.5:1. ADD 'data-testid' to ALL buttons, links, inputs, tabs, and toggles."
+  },
+  "instructions_to_main_agent": [
+    "Build the UI as a mobile-first web app using React, Tailwind, and Shadcn UI components.",
+    "Ensure 'data-testid' is present on all interactive elements.",
+    "Use Manrope for body text and Cabinet Grotesk for headings. You can use standard Tailwind classes by mapping them in your tailwind config or using standard sans alternatives if fonts fail to load.",
+    "Implement bottom tab navigation using Lucide icons.",
+    "Mock the data realistically (names, songs, dates) using the provided avatar images for members.",
+    "Ensure the Light theme feels premium by strictly adhering to the bone-white background and deep navy/gold accents.",
+    "Do NOT use pure #000000 or generic 'SaaS Blue'. Use the specific HEX codes provided in the color palette."
+  ]
+}
