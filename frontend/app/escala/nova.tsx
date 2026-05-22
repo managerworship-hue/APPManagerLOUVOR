@@ -25,6 +25,7 @@ export default function NovaEscala() {
   const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [songQuery, setSongQuery] = useState('');
+  const [memberQuery, setMemberQuery] = useState('');
   const [saving, setSaving] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -175,31 +176,66 @@ export default function NovaEscala() {
 
           <View style={styles.sectionRow}>
             <Text style={styles.sectionTitle}>Músicos ({selectedMembers.length})</Text>
-            <TouchableOpacity
-              testID="add-new-member-button"
-              style={styles.addBtn}
-              onPress={() => router.push('/convidar')}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="person-add-outline" size={14} color={colors.primary} />
-              <Text style={styles.addBtnText}>Convidar</Text>
-            </TouchableOpacity>
+            {selectedMembers.length > 0 && (
+              <TouchableOpacity
+                testID="clear-selected-members"
+                onPress={() => setSelectedMembers([])}
+                style={styles.clearBtn}
+              >
+                <Text style={styles.clearBtnText}>Limpar</Text>
+              </TouchableOpacity>
+            )}
           </View>
-          <View style={styles.chips}>
-            {members.map((m) => {
-              const sel = selectedMembers.includes(m.id);
-              return (
-                <TouchableOpacity
-                  key={m.id}
-                  testID={`pick-member-${m.id}`}
-                  style={[styles.chip, sel && styles.chipSelected]}
-                  onPress={() => toggle(selectedMembers, setSelectedMembers, m.id)}
-                >
-                  <Text style={[styles.chipText, sel && styles.chipTextSelected]}>{m.name}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+
+          {members.length === 0 ? (
+            <View style={styles.emptyBox}>
+              <Text style={styles.muted}>Nenhum membro no ministério ainda.</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.searchWrap}>
+                <Ionicons name="search" size={16} color={colors.textMuted} />
+                <TextInput
+                  testID="search-members-input"
+                  value={memberQuery}
+                  onChangeText={setMemberQuery}
+                  placeholder="Buscar membro do ministério..."
+                  placeholderTextColor={colors.textMuted}
+                  style={styles.searchInput}
+                />
+                {memberQuery ? (
+                  <TouchableOpacity onPress={() => setMemberQuery('')} testID="clear-member-search">
+                    <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              <View style={styles.chips}>
+                {(() => {
+                  const q = memberQuery.trim().toLowerCase();
+                  const filtered = q
+                    ? members.filter(m => m.name.toLowerCase().includes(q))
+                    : members;
+                  if (filtered.length === 0) {
+                    return <Text style={styles.muted}>Nenhum membro encontrado para “{memberQuery}”.</Text>;
+                  }
+                  return filtered.map((m) => {
+                    const sel = selectedMembers.includes(m.id);
+                    return (
+                      <TouchableOpacity
+                        key={m.id}
+                        testID={`pick-member-${m.id}`}
+                        style={[styles.chip, sel && styles.chipSelected]}
+                        onPress={() => toggle(selectedMembers, setSelectedMembers, m.id)}
+                      >
+                        {sel && <Ionicons name="checkmark" size={12} color="#fff" />}
+                        <Text style={[styles.chipText, sel && styles.chipTextSelected]}>{m.name}</Text>
+                      </TouchableOpacity>
+                    );
+                  });
+                })()}
+              </View>
+            </>
+          )}
 
           <TouchableOpacity
             testID="save-scale-button"
