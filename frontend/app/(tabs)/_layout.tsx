@@ -24,17 +24,20 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      // item 8: force unmount/remount ao mudar de tab para evitar tela em branco no Android
       screenOptions={{
         headerShown: false,
+        lazy: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
-          paddingTop: 8,
+          // item 5: altura fixa e consistente para não transbordar o ecrã
+          height: Platform.OS === 'ios' ? 82 : 60,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 6,
+          paddingTop: 6,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
       }}

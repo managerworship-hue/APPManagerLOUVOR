@@ -8,19 +8,35 @@ import { AuthProvider } from '@/src/context/AuthContext';
 export default function RootLayout() {
   useEffect(() => {
     if (Platform.OS === 'web') {
-      // Registrar manifest PWA
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = '/manifest.json';
-      document.head.appendChild(link);
+      // item 9: definir idioma da página como português para evitar popup de tradução
+      document.documentElement.lang = 'pt-BR';
 
-      // Registrar Service Worker para funcionar offline
+      // item 5: viewport correto — impede zoom e ajusta ao ecrã do telemóvel
+      let meta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
+      if (!meta) {
+        meta = document.createElement('meta') as HTMLMetaElement;
+        meta.name = 'viewport';
+        document.head.appendChild(meta);
+      }
+      meta.content =
+        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+
+      // Registar manifest PWA
+      let link = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement('link') as HTMLLinkElement;
+        link.rel = 'manifest';
+        document.head.appendChild(link);
+      }
+      link.href = '/manifest.json';
+
+      // Registar Service Worker para funcionar offline
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker
             .register('/service-worker.js')
-            .then(reg => console.log('✅ Service Worker registrado:', reg.scope))
-            .catch(err => console.error('❌ Service Worker falhou:', err));
+            .then((reg) => console.log('✅ Service Worker registrado:', reg.scope))
+            .catch((err) => console.error('❌ Service Worker falhou:', err));
         });
       }
     }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -44,7 +44,11 @@ export default function ScaleDetail() {
       setSongs(s);
       setMembers(m);
     } catch (e: any) {
-      Alert.alert('Erro', e.message || 'Não foi possível carregar');
+      if (Platform.OS === 'web') {
+        window.alert('Erro: ' + (e.message || 'Não foi possível carregar'));
+      } else {
+        Alert.alert('Erro', e.message || 'Não foi possível carregar');
+      }
       router.back();
     } finally {
       setLoading(false);
@@ -54,15 +58,28 @@ export default function ScaleDetail() {
   useEffect(() => { load(); }, [load]);
 
   const onDelete = () => {
-    Alert.alert('Excluir escala', 'Esta ação não pode ser desfeita.', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: async () => {
-        try {
-          await api(`/scales/${id}`, { method: 'DELETE' });
-          router.back();
-        } catch (e: any) { Alert.alert('Erro', e.message); }
-      } },
-    ]);
+    const doDelete = async () => {
+      try {
+        await api(`/scales/${id}`, { method: 'DELETE' });
+        router.back();
+      } catch (e: any) {
+        if (Platform.OS === 'web') {
+          window.alert('Erro: ' + e.message);
+        } else {
+          Alert.alert('Erro', e.message);
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Excluir esta escala? Esta ação não pode ser desfeita.');
+      if (confirmed) doDelete();
+    } else {
+      Alert.alert('Excluir escala', 'Esta ação não pode ser desfeita.', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: doDelete },
+      ]);
+    }
   };
 
   if (loading || !scale) {
@@ -83,10 +100,22 @@ export default function ScaleDetail() {
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Escala</Text>
         {canEdit ? (
-          <TouchableOpacity testID="delete-scale-button" onPress={onDelete} style={styles.headerBtn}>
-            <Ionicons name="trash-outline" size={20} color={colors.error} />
-          </TouchableOpacity>
-        ) : <View style={{ width: 44 }} />}
+          <View style={styles.headerActions}>
+            {/* item 3: botão de editar escala */}
+            <TouchableOpacity
+              testID="edit-scale-button"
+              onPress={() => router.push(`/escala/nova?edit=${id}`)}
+              style={styles.headerBtn}
+            >
+              <Ionicons name="pencil-outline" size={20} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity testID="delete-scale-button" onPress={onDelete} style={styles.headerBtn}>
+              <Ionicons name="trash-outline" size={20} color={colors.error} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={{ width: 44 }} />
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -95,7 +124,9 @@ export default function ScaleDetail() {
           <Text style={styles.heroTitle}>{scale.title}</Text>
           <View style={styles.heroMeta}>
             <Ionicons name="calendar-outline" size={14} color={colors.gold} />
-            <Text style={styles.heroMetaText}>{formatDate(scale.date)}{scale.time ? `  ·  ${scale.time}` : ''}</Text>
+            <Text style={styles.heroMetaText}>
+              {formatDate(scale.date)}{scale.time ? `  ·  ${scale.time}` : ''}
+            </Text>
           </View>
           {scale.location ? (
             <View style={styles.heroMeta}>
@@ -158,6 +189,19 @@ export default function ScaleDetail() {
             </View>
           )}
         </View>
+
+        {/* Botão de editar no rodapé para acesso rápido (item 3) */}
+        {canEdit && (
+          <TouchableOpacity
+            testID="edit-scale-bottom-button"
+            style={styles.editBtn}
+            onPress={() => router.push(`/escala/nova?edit=${id}`)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="pencil-outline" size={18} color="#fff" />
+            <Text style={styles.editBtnText}>Editar Escala</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -166,8 +210,13 @@ export default function ScaleDetail() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm, paddingVertical: spacing.sm,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
   headerBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text },
   scroll: { padding: spacing.md, paddingBottom: spacing.xl },
   hero: {
@@ -206,4 +255,12 @@ const styles = StyleSheet.create({
   mAvatarText: { color: '#fff', fontWeight: '700' },
   mName: { fontSize: font.caption, fontWeight: '600', color: colors.text },
   mInstrument: { fontSize: font.small, color: colors.textSecondary, marginTop: 2 },
+  editBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: radius.full,
+    paddingVertical: 16,
+    marginTop: spacing.sm,
+  },
+  editBtnText: { color: '#fff', fontSize: font.body, fontWeight: '600' },
 });
