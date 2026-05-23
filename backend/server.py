@@ -618,8 +618,8 @@ app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:8081",            # dev local
-        "https://appmanager-louvor.onrender.com" # produção
+        "http://localhost:8081",
+        "https://appmanager-louvor.onrender.com"  # ← URL real do Static Site
     ],
     allow_credentials=True,
     allow_methods=["*"],
