@@ -509,6 +509,18 @@ async def create_announcement(req: AnnouncementReq, user: dict = Depends(require
     await db.announcements.insert_one(ann)
     return serialize_announcement(ann)
 
+@api_router.put("/announcements/{ann_id}")
+async def update_announcement(ann_id: str, req: AnnouncementReq, user: dict = Depends(get_current_user)):
+    a = await db.announcements.find_one({"_id": ann_id, "ministry_id": user["ministry_id"]})
+    if not a:
+        raise HTTPException(status_code=404, detail="Aviso não encontrado")
+    if user.get("role") != ROLE_LEADER and a.get("author_id") != user["_id"] and PERM_EDIT_ANNOUNCEMENTS not in user.get("permissions", []):
+        raise HTTPException(status_code=403, detail="Sem permissão")
+    updates = {"title": req.title.strip(), "body": req.body.strip()}
+    await db.announcements.update_one({"_id": ann_id}, {"$set": updates})
+    a.update(updates)
+    return serialize_announcement(a)
+
 @api_router.delete("/announcements/{ann_id}")
 async def delete_announcement(ann_id: str, user: dict = Depends(get_current_user)):
     a = await db.announcements.find_one({"_id": ann_id, "ministry_id": user["ministry_id"]})

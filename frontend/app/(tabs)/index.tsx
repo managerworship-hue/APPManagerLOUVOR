@@ -29,7 +29,7 @@ type Announcement = {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, ministry } = useAuth();
+  const { user, ministry, isLeader } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ export default function HomeScreen() {
       ]);
       setStats(s);
       setAnnouncements(a.slice(0, 3));
-    } catch (e) {
+    } catch {
       // ignore
     } finally {
       setLoading(false);
@@ -53,16 +53,11 @@ export default function HomeScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    load();
-  };
-
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -70,21 +65,24 @@ export default function HomeScreen() {
             <Text style={styles.greeting} testID="home-greeting">Olá, {user?.name?.split(' ')[0]}</Text>
             <Text style={styles.ministryName}>{ministry?.name}</Text>
           </View>
-          <TouchableOpacity
-            testID="home-invite-button"
-            style={styles.iconBtn}
-            onPress={() => router.push('/convidar')}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="share-outline" size={20} color={colors.text} />
-          </TouchableOpacity>
+          {/* Convidar: apenas líder */}
+          {isLeader && (
+            <TouchableOpacity
+              testID="home-invite-button"
+              style={styles.iconBtn}
+              onPress={() => router.push('/convidar')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="share-outline" size={20} color={colors.text} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {loading ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
         ) : (
           <>
-            {/* Next Scale */}
+            {/* Próxima escala */}
             {stats?.next_scale ? (
               <TouchableOpacity
                 testID="next-scale-card"
@@ -113,14 +111,15 @@ export default function HomeScreen() {
               <View style={styles.emptyCard}>
                 <Ionicons name="calendar-outline" size={28} color={colors.textMuted} />
                 <Text style={styles.emptyText}>Nenhuma escala próxima</Text>
-                <Text style={styles.emptySubtext}>Crie sua primeira escala para o ministério</Text>
+                <Text style={styles.emptySubtext}>Crie a primeira escala do ministério</Text>
               </View>
             )}
 
-            {/* Stats grid */}
+            {/* Grid de estatísticas */}
             <View style={styles.grid}>
               <TouchableOpacity style={styles.statCard} onPress={() => router.push('/membros')} testID="stat-members">
                 <View style={[styles.statIcon, { backgroundColor: '#F2EBDB' }]}>
+                  {/* item 3: ícone de grupo de pessoas */}
                   <Ionicons name="people-outline" size={20} color={colors.gold} />
                 </View>
                 <Text style={styles.statValue}>{stats?.members ?? 0}</Text>
@@ -140,7 +139,13 @@ export default function HomeScreen() {
                 <Text style={styles.statValue}>{stats?.scales ?? 0}</Text>
                 <Text style={styles.statLabel}>Escalas</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.statCard} onPress={() => router.push('/aviso/novo')} testID="stat-announcements">
+              {/* Avisos: só líder cria */}
+              <TouchableOpacity
+                style={styles.statCard}
+                onPress={() => isLeader ? router.push('/aviso/novo') : null}
+                testID="stat-announcements"
+                activeOpacity={isLeader ? 0.7 : 1}
+              >
                 <View style={[styles.statIcon, { backgroundColor: '#F2E6E6' }]}>
                   <Ionicons name="megaphone-outline" size={20} color={colors.error} />
                 </View>
@@ -149,15 +154,14 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Announcements */}
+            {/* Avisos recentes — clicáveis (item 8) */}
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Avisos recentes</Text>
-              <TouchableOpacity
-                onPress={() => router.push('/aviso/novo')}
-                testID="new-announcement-button"
-              >
-                <Text style={styles.sectionLink}>Novo +</Text>
-              </TouchableOpacity>
+              {isLeader && (
+                <TouchableOpacity onPress={() => router.push('/aviso/novo')} testID="new-announcement-button">
+                  <Text style={styles.sectionLink}>Novo +</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {announcements.length === 0 ? (
@@ -166,15 +170,22 @@ export default function HomeScreen() {
               </View>
             ) : (
               announcements.map((a) => (
-                <View key={a.id} style={styles.annCard} testID={`announcement-${a.id}`}>
+                <TouchableOpacity
+                  key={a.id}
+                  style={styles.annCard}
+                  testID={`announcement-${a.id}`}
+                  onPress={() => router.push(`/aviso/${a.id}`)}
+                  activeOpacity={0.75}
+                >
                   <View style={styles.annHeader}>
                     <Ionicons name="megaphone" size={14} color={colors.gold} />
                     <Text style={styles.annAuthor}>{a.author_name}</Text>
                     <Text style={styles.annTime}>· {formatRelative(a.created_at)}</Text>
+                    <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={{ marginLeft: 'auto' }} />
                   </View>
                   <Text style={styles.annTitle}>{a.title}</Text>
                   <Text style={styles.annBody} numberOfLines={2}>{a.body}</Text>
-                </View>
+                </TouchableOpacity>
               ))
             )}
 
@@ -192,62 +203,26 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
   greeting: { fontSize: font.h2, fontWeight: '700', color: colors.text, letterSpacing: -0.3 },
   ministryName: { fontSize: font.caption, color: colors.textSecondary, marginTop: 2 },
-  iconBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: colors.surface,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: colors.border,
-  },
-  nextCard: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    overflow: 'hidden',
-    position: 'relative',
-  },
+  iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
+  nextCard: { backgroundColor: colors.primary, borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.md, overflow: 'hidden', position: 'relative' },
   nextOverlay: { position: 'absolute', right: -20, top: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(197,160,89,0.15)' },
   nextLabel: { fontSize: font.small, color: colors.gold, fontWeight: '700', letterSpacing: 1.5, marginBottom: 6 },
   nextTitle: { fontSize: 22, color: '#fff', fontWeight: '700', marginBottom: spacing.sm, letterSpacing: -0.3 },
   nextRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   nextMeta: { color: 'rgba(255,255,255,0.85)', fontSize: font.body },
-  emptyCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1, borderColor: colors.border,
-    marginBottom: spacing.md,
-  },
+  emptyCard: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, alignItems: 'center', borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
   emptyText: { fontSize: font.body, color: colors.text, fontWeight: '600', marginTop: 8 },
   emptySubtext: { fontSize: font.caption, color: colors.textSecondary, marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-  statCard: {
-    flexBasis: '48%',
-    flexGrow: 1,
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  statIcon: {
-    width: 36, height: 36, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
+  statCard: { flexBasis: '48%', flexGrow: 1, backgroundColor: colors.surface, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border },
+  statIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
   statValue: { fontSize: 24, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
   statLabel: { fontSize: font.caption, color: colors.textSecondary, marginTop: 2 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
   sectionTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text },
   sectionLink: { color: colors.primary, fontWeight: '600', fontSize: font.caption },
   emptySmall: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
-  annCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1, borderColor: colors.border,
-  },
+  annCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
   annHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   annAuthor: { fontSize: font.small, color: colors.text, fontWeight: '600' },
   annTime: { fontSize: font.small, color: colors.textMuted },

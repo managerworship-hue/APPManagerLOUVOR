@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator,
-  Linking, Alert,
+  Linking, Alert, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -33,7 +33,8 @@ export default function SongDetail() {
       const r = await api<Song>(`/songs/${id}`);
       setSong(r);
     } catch (e: any) {
-      Alert.alert('Erro', e.message);
+      if (Platform.OS === 'web') { window.alert('Erro: ' + e.message); }
+      else { Alert.alert('Erro', e.message); }
       router.back();
     } finally {
       setLoading(false);
@@ -50,15 +51,24 @@ export default function SongDetail() {
   };
 
   const onDelete = () => {
-    Alert.alert('Excluir música', 'Esta ação não pode ser desfeita.', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: async () => {
-        try {
-          await api(`/songs/${id}`, { method: 'DELETE' });
-          router.back();
-        } catch (e: any) { Alert.alert('Erro', e.message); }
-      } },
-    ]);
+    const doDelete = async () => {
+      try {
+        await api(`/songs/${id}`, { method: 'DELETE' });
+        router.back();
+      } catch (e: any) {
+        if (Platform.OS === 'web') { window.alert('Erro: ' + e.message); }
+        else { Alert.alert('Erro', e.message); }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Excluir esta música? Esta ação não pode ser desfeita.')) doDelete();
+    } else {
+      Alert.alert('Excluir música', 'Esta ação não pode ser desfeita.', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: doDelete },
+      ]);
+    }
   };
 
   if (loading || !song) {
@@ -75,10 +85,22 @@ export default function SongDetail() {
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Música</Text>
         {canEdit ? (
-          <TouchableOpacity testID="delete-song-button" onPress={onDelete} style={styles.headerBtn}>
-            <Ionicons name="trash-outline" size={20} color={colors.error} />
-          </TouchableOpacity>
-        ) : <View style={{ width: 44 }} />}
+          <View style={styles.headerActions}>
+            {/* item 6: botão de editar música */}
+            <TouchableOpacity
+              testID="edit-song-button"
+              onPress={() => router.push(`/musica/nova?edit=${id}`)}
+              style={styles.headerBtn}
+            >
+              <Ionicons name="pencil-outline" size={20} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity testID="delete-song-button" onPress={onDelete} style={styles.headerBtn}>
+              <Ionicons name="trash-outline" size={20} color={colors.error} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={{ width: 44 }} />
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -97,21 +119,13 @@ export default function SongDetail() {
         {(song.youtube_url || song.cifra_url) && (
           <View style={styles.links}>
             {song.youtube_url ? (
-              <TouchableOpacity
-                testID="open-youtube-button"
-                style={[styles.linkBtn, { backgroundColor: '#9B2C2C' }]}
-                onPress={() => openURL(song.youtube_url)}
-              >
+              <TouchableOpacity testID="open-youtube-button" style={[styles.linkBtn, { backgroundColor: '#9B2C2C' }]} onPress={() => openURL(song.youtube_url)}>
                 <Ionicons name="logo-youtube" size={18} color="#fff" />
                 <Text style={styles.linkBtnText}>YouTube</Text>
               </TouchableOpacity>
             ) : null}
             {song.cifra_url ? (
-              <TouchableOpacity
-                testID="open-cifra-button"
-                style={[styles.linkBtn, { backgroundColor: colors.primary }]}
-                onPress={() => openURL(song.cifra_url)}
-              >
+              <TouchableOpacity testID="open-cifra-button" style={[styles.linkBtn, { backgroundColor: colors.primary }]} onPress={() => openURL(song.cifra_url)}>
                 <Ionicons name="document-text-outline" size={18} color="#fff" />
                 <Text style={styles.linkBtnText}>Cifra</Text>
               </TouchableOpacity>
@@ -127,6 +141,19 @@ export default function SongDetail() {
             </View>
           </View>
         ) : null}
+
+        {/* Botão editar no rodapé para acesso rápido */}
+        {canEdit && (
+          <TouchableOpacity
+            testID="edit-song-bottom-button"
+            style={styles.editBtn}
+            onPress={() => router.push(`/musica/nova?edit=${id}`)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="pencil-outline" size={18} color="#fff" />
+            <Text style={styles.editBtnText}>Editar Música</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -137,6 +164,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
   headerBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text },
   scroll: { padding: spacing.md, paddingBottom: spacing.xl },
   hero: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
@@ -153,4 +181,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
   lyricsCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   lyricsText: { fontSize: font.body, color: colors.text, lineHeight: 24 },
+  editBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: radius.full, paddingVertical: 16, marginTop: spacing.sm },
+  editBtnText: { color: '#fff', fontSize: font.body, fontWeight: '600' },
 });

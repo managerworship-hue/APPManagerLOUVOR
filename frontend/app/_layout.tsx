@@ -8,10 +8,10 @@ import { AuthProvider } from '@/src/context/AuthContext';
 export default function RootLayout() {
   useEffect(() => {
     if (Platform.OS === 'web') {
-      // item 9: definir idioma da página como português para evitar popup de tradução
+      // Idioma português — evita popup de tradução
       document.documentElement.lang = 'pt-BR';
 
-      // item 5: viewport correto — impede zoom e ajusta ao ecrã do telemóvel
+      // Viewport correto — impede zoom e ajusta ao ecrã do telemóvel
       let meta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
       if (!meta) {
         meta = document.createElement('meta') as HTMLMetaElement;
@@ -21,7 +21,7 @@ export default function RootLayout() {
       meta.content =
         'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
 
-      // Registar manifest PWA
+      // Manifest PWA
       let link = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
       if (!link) {
         link = document.createElement('link') as HTMLLinkElement;
@@ -30,13 +30,13 @@ export default function RootLayout() {
       }
       link.href = '/manifest.json';
 
-      // Registar Service Worker para funcionar offline
+      // Service Worker
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker
             .register('/service-worker.js')
-            .then((reg) => console.log('✅ Service Worker registrado:', reg.scope))
-            .catch((err) => console.error('❌ Service Worker falhou:', err));
+            .then((reg) => console.log('✅ SW registrado:', reg.scope))
+            .catch((err) => console.error('❌ SW falhou:', err));
         });
       }
     }
@@ -56,6 +56,7 @@ export default function RootLayout() {
           <Stack.Screen name="musica/nova" options={{ presentation: 'modal' }} />
           <Stack.Screen name="musica/[id]" />
           <Stack.Screen name="aviso/novo" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="aviso/[id]" />
           <Stack.Screen name="membros" />
           <Stack.Screen name="convidar" />
           <Stack.Screen name="api-docs" />
