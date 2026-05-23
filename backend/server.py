@@ -619,7 +619,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:8081",            # dev local
-        "https://SEU-FRONTEND.onrender.com" # produção
+        "https://appmanager-louvor.onrender.com" # produção
     ],
     allow_credentials=True,
     allow_methods=["*"],
