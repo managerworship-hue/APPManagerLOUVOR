@@ -27,7 +27,12 @@ JWT_ALGORITHM = os.environ.get('JWT_ALGORITHM', 'HS256')
 JWT_EXPIRE_MINUTES = int(os.environ.get('JWT_EXPIRE_MINUTES', '10080'))
 
 # DB
-client = AsyncIOMotorClient(MONGO_URL)
+client = AsyncIOMotorClient(
+    MONGO_URL,
+    serverSelectionTimeoutMS=5000,
+    connectTimeoutMS=5000,
+    socketTimeoutMS=5000,
+)
 db = client[DB_NAME]
 
 # Auth utilities
@@ -629,10 +634,13 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup():
-    await db.users.create_index("email", unique=True)
-    await db.ministries.create_index("invite_code", unique=True)
-    await db.ministries.create_index("api_key", unique=True)
-
-@app.on_event("shutdown")
+    try:
+        await db.users.create_index("email", unique=True)
+        await db.ministries.create_index("invite_code", unique=True)
+        await db.ministries.create_index("api_key", unique=True)
+        logger.info("✅ Conectado ao MongoDB com sucesso")
+    except Exception as e:
+        logger.error(f"⚠️ MongoDB indisponível no startup: {e}")
+        # Servidor sobe mesmo assim — tentará conectar nas requisições@app.on_event("shutdown")
 async def shutdown():
     client.close()
