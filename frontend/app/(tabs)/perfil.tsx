@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,14 +12,22 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, ministry, isLeader, logout } = useAuth();
 
-  const confirmLogout = () => {
-    Alert.alert('Sair', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: async () => {
+  const confirmLogout = async () => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Tem certeza que deseja sair da conta?');
+      if (confirmed) {
         await logout();
         router.replace('/login');
-      } },
-    ]);
+      }
+    } else {
+      Alert.alert('Sair', 'Tem certeza que deseja sair?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Sair', style: 'destructive', onPress: async () => {
+          await logout();
+          router.replace('/login');
+        } },
+      ]);
+    }
   };
 
   return (
