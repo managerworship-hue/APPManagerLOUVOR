@@ -327,9 +327,9 @@ const styles = StyleSheet.create({
   version: { textAlign: 'center', color: colors.textMuted, fontSize: font.small, marginTop: spacing.lg },
   // Modal
   modalSafe: { flex: 1, backgroundColor: colors.bg },
-  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
-  headerBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  modalTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
+  headerBtn: { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  modalTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text, flex: 1, textAlign: 'center' },
   saveText: { fontSize: font.body, color: colors.primary, fontWeight: '700' },
   modalSub: { fontSize: font.caption, color: colors.textSecondary, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   // Grid de avatares
