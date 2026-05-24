@@ -8,9 +8,11 @@ import logging
 import secrets
 import string
 import uuid
+import json
+import asyncio
 from pathlib import Path
 from pydantic import BaseModel, EmailStr, Field
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Any
 from datetime import datetime, timezone, timedelta
 from passlib.context import CryptContext
 from jose import jwt, JWTError
@@ -25,6 +27,41 @@ DB_NAME = os.environ['DB_NAME']
 JWT_SECRET = os.environ['JWT_SECRET']
 JWT_ALGORITHM = os.environ.get('JWT_ALGORITHM', 'HS256')
 JWT_EXPIRE_MINUTES = int(os.environ.get('JWT_EXPIRE_MINUTES', '10080'))
+
+# VAPID para Web Push (gera em https://vapidkeys.com ou com npx web-push generate-vapid-keys)
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_CLAIMS = {"sub": "mailto:admin@louvorapp.com"}
+
+async def send_push_to_users(user_ids: List[str], title: str, body: str, url: str = '/'):
+    """Envia notificação push a uma lista de utilizadores pelo ID."""
+    if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
+        logger.warning("VAPID keys não configuradas — notificações push desativadas")
+        return
+    try:
+        from pywebpush import webpush, WebPushException
+    except ImportError:
+        logger.warning("pywebpush não instalado — adicione ao requirements.txt")
+        return
+
+    payload = json.dumps({"title": title, "body": body, "url": url})
+
+    # Buscar subscrições dos utilizadores
+    subs = await db.push_subscriptions.find({"user_id": {"$in": user_ids}}).to_list(None)
+
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info=sub["subscription"],
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims=VAPID_CLAIMS,
+            )
+        except Exception as e:
+            logger.error(f"Erro ao enviar push para {sub.get('user_id')}: {e}")
+            # Remover subscrição inválida
+            if "410" in str(e) or "404" in str(e):
+                await db.push_subscriptions.delete_one({"_id": sub["_id"]})
 
 # DB
 client = AsyncIOMotorClient(
@@ -63,7 +100,6 @@ class UserOut(BaseModel):
     permissions: List[str] = []
     instruments: List[str] = []
     ministry_id: str
-    avatar: Optional[str] = ""
 
 class MinistryOut(BaseModel):
     id: str
@@ -90,7 +126,6 @@ class AuthResponse(BaseModel):
 class UpdateProfileReq(BaseModel):
     name: Optional[str] = None
     instruments: Optional[List[str]] = None
-    avatar: Optional[str] = None
 
 class UpdateMemberReq(BaseModel):
     role: Optional[Literal["leader", "member"]] = None
@@ -114,11 +149,15 @@ class ScaleReq(BaseModel):
     notes: Optional[str] = ""
     song_ids: List[str] = []
     musician_ids: List[str] = []
-    musician_instruments: Optional[dict] = {}
 
 class AnnouncementReq(BaseModel):
     title: str
     body: str
+
+class PushSubscriptionReq(BaseModel):
+    endpoint: str
+    keys: dict
+    expirationTime: Optional[Any] = None
 
 
 # ============ HELPERS ============
@@ -155,7 +194,6 @@ def serialize_user(u: dict) -> UserOut:
         permissions=u.get("permissions", []),
         instruments=u.get("instruments", []),
         ministry_id=u["ministry_id"],
-        avatar=u.get("avatar", ""),
     )
 
 def serialize_ministry(m: dict, include_api_key: bool = True) -> MinistryOut:
@@ -262,6 +300,18 @@ async def signup(req: SignupReq):
     }
     await db.users.insert_one(user)
 
+    # Notificar líderes quando novo membro entra (apenas se não for o primeiro — criador do ministério)
+    if role == ROLE_MEMBER:
+        leaders = await db.users.find({"ministry_id": ministry["_id"], "role": ROLE_LEADER}).to_list(None)
+        leader_ids = [l["_id"] for l in leaders]
+        if leader_ids:
+            asyncio.create_task(send_push_to_users(
+                leader_ids,
+                title="Novo membro",
+                body=f"{req.name.strip()} entrou no ministério.",
+                url="/membros",
+            ))
+
     return AuthResponse(
         token=make_token(user["_id"], ministry["_id"]),
         user=serialize_user(user),
@@ -293,8 +343,6 @@ async def update_me(req: UpdateProfileReq, user: dict = Depends(get_current_user
         updates["name"] = req.name.strip()
     if req.instruments is not None:
         updates["instruments"] = req.instruments
-    if req.avatar is not None:
-        updates["avatar"] = req.avatar
     if updates:
         await db.users.update_one({"_id": user["_id"]}, {"$set": updates})
         user.update(updates)
@@ -337,6 +385,16 @@ async def update_member(member_id: str, req: UpdateMemberReq, leader: dict = Dep
     if updates:
         await db.users.update_one({"_id": member_id}, {"$set": updates})
         target.update(updates)
+
+    # Notificação de promoção a líder
+    if updates.get("role") == ROLE_LEADER:
+        asyncio.create_task(send_push_to_users(
+            [member_id],
+            title="Parabéns! 🌟",
+            body="Você foi promovido a líder do ministério.",
+            url="/",
+        ))
+
     return serialize_user(target)
 
 @api_router.delete("/ministry/members/{member_id}")
@@ -347,6 +405,8 @@ async def remove_member(member_id: str, leader: dict = Depends(require_leader)):
     if not target:
         raise HTTPException(status_code=404, detail="Membro não encontrado")
     await db.users.delete_one({"_id": member_id})
+    # Subscrições push do membro removido
+    await db.push_subscriptions.delete_many({"user_id": member_id})
     return {"ok": True}
 
 @api_router.post("/ministry/api-key/rotate", response_model=MinistryOut)
@@ -432,7 +492,6 @@ def serialize_scale(s: dict) -> dict:
         "notes": s.get("notes", ""),
         "song_ids": s.get("song_ids", []),
         "musician_ids": s.get("musician_ids", []),
-        "musician_instruments": s.get("musician_instruments", {}),
         "created_at": s.get("created_at", ""),
     }
 
@@ -465,6 +524,18 @@ async def create_scale(req: ScaleReq, user: dict = Depends(require_perm(PERM_EDI
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.scales.insert_one(scale)
+
+    # Notificar todos os membros do ministério
+    members = await db.users.find({"ministry_id": user["ministry_id"], "_id": {"$ne": user["_id"]}}).to_list(None)
+    member_ids = [m["_id"] for m in members]
+    if member_ids:
+        asyncio.create_task(send_push_to_users(
+            member_ids,
+            title="Nova escala criada 📅",
+            body=f"{req.title.strip()} — {req.date}",
+            url="/escalas",
+        ))
+
     return serialize_scale(scale)
 
 @api_router.put("/scales/{scale_id}")
@@ -472,9 +543,34 @@ async def update_scale(scale_id: str, req: ScaleReq, user: dict = Depends(requir
     s = await db.scales.find_one({"_id": scale_id, "ministry_id": user["ministry_id"]})
     if not s:
         raise HTTPException(status_code=404, detail="Escala não encontrada")
+
+    old_musician_ids = set(s.get("musician_ids", []))
+    new_musician_ids = set(req.musician_ids)
+    removed_ids = list(old_musician_ids - new_musician_ids)
+
     updates = req.dict()
     await db.scales.update_one({"_id": scale_id}, {"$set": updates})
     s.update(updates)
+
+    # Notificar músicos que continuam na escala sobre a alteração
+    notif_ids = list(new_musician_ids - {user["_id"]})
+    if notif_ids:
+        asyncio.create_task(send_push_to_users(
+            notif_ids,
+            title="Escala atualizada ✏️",
+            body=f"A escala '{req.title.strip()}' foi alterada.",
+            url=f"/escala/{scale_id}",
+        ))
+
+    # Notificar músicos removidos da escala
+    if removed_ids:
+        asyncio.create_task(send_push_to_users(
+            removed_ids,
+            title="Removido da escala",
+            body=f"Você foi removido da escala '{req.title.strip()}'.",
+            url="/escalas",
+        ))
+
     return serialize_scale(s)
 
 @api_router.delete("/scales/{scale_id}")
@@ -515,6 +611,18 @@ async def create_announcement(req: AnnouncementReq, user: dict = Depends(require
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.announcements.insert_one(ann)
+
+    # Notificar todos os membros do ministério
+    members = await db.users.find({"ministry_id": user["ministry_id"], "_id": {"$ne": user["_id"]}}).to_list(None)
+    member_ids = [m["_id"] for m in members]
+    if member_ids:
+        asyncio.create_task(send_push_to_users(
+            member_ids,
+            title=f"📢 {req.title.strip()}",
+            body=req.body.strip()[:80] + ("..." if len(req.body) > 80 else ""),
+            url="/",
+        ))
+
     return serialize_announcement(ann)
 
 @api_router.put("/announcements/{ann_id}")
@@ -630,6 +738,30 @@ async def ext_scale_detail(scale_id: str, m: dict = Depends(get_ministry_by_api_
                 "lyrics": song.get("lyrics", ""),
             })
     return {**serialize_scale(s), "setlist": setlist}
+
+
+# ---- PUSH SUBSCRIPTIONS ----
+
+@api_router.post("/push/subscribe")
+async def push_subscribe(req: PushSubscriptionReq, user: dict = Depends(get_current_user)):
+    """Guarda a subscrição push do utilizador."""
+    sub_data = {
+        "endpoint": req.endpoint,
+        "keys": req.keys,
+        "expirationTime": req.expirationTime,
+    }
+    await db.push_subscriptions.update_one(
+        {"user_id": user["_id"], "subscription.endpoint": req.endpoint},
+        {"$set": {"user_id": user["_id"], "ministry_id": user["ministry_id"], "subscription": sub_data, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True,
+    )
+    return {"ok": True}
+
+@api_router.delete("/push/unsubscribe")
+async def push_unsubscribe(user: dict = Depends(get_current_user)):
+    """Remove todas as subscrições push do utilizador."""
+    await db.push_subscriptions.delete_many({"user_id": user["_id"]})
+    return {"ok": True}
 
 
 # Include router

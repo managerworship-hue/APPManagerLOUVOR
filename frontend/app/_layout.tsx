@@ -8,10 +8,8 @@ import { AuthProvider } from '@/src/context/AuthContext';
 export default function RootLayout() {
   useEffect(() => {
     if (Platform.OS === 'web') {
-      // Idioma português — evita popup de tradução
       document.documentElement.lang = 'pt-BR';
 
-      // Viewport: impede zoom, ajusta ao ecrã, respeita safe area do iOS
       let meta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
       if (!meta) {
         meta = document.createElement('meta') as HTMLMetaElement;
@@ -21,27 +19,17 @@ export default function RootLayout() {
       meta.content =
         'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover';
 
-      // CSS global — corrige overflow lateral e garante que nada sai fora do ecrã
       const style = document.createElement('style');
       style.innerHTML = `
         html, body {
           overflow-x: hidden !important;
           max-width: 100vw !important;
           width: 100% !important;
-          position: relative;
         }
-        * {
-          box-sizing: border-box;
-        }
-        /* Impede que modais e overlays saiam fora do viewport */
-        [role="dialog"], .modal-container {
-          max-width: 100vw !important;
-          overflow-x: hidden !important;
-        }
+        * { box-sizing: border-box; }
       `;
       document.head.appendChild(style);
 
-      // Manifest PWA
       let link = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
       if (!link) {
         link = document.createElement('link') as HTMLLinkElement;
@@ -50,13 +38,12 @@ export default function RootLayout() {
       }
       link.href = '/manifest.json';
 
-      // Service Worker
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker
             .register('/service-worker.js')
-            .then((reg) => console.log('✅ SW registrado:', reg.scope))
-            .catch((err) => console.error('❌ SW falhou:', err));
+            .then(reg => console.log('✅ SW registrado:', reg.scope))
+            .catch(err => console.error('❌ SW falhou:', err));
         });
       }
     }
