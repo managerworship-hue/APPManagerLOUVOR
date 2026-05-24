@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
-  KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
+  KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Image,
 } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
 import { colors, radius, font, spacing } from '@/src/theme';
+
+// Ícone: na web usa URL pública; no nativo usa require local
+const APP_ICON =
+  Platform.OS === 'web'
+    ? { uri: '/icons/icon.png' }
+    : require('../assets/images/icon.png');
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -19,7 +25,8 @@ export default function LoginScreen() {
 
   const submit = async () => {
     if (!email || !password) {
-      Alert.alert('Atenção', 'Preencha email e senha.');
+      if (Platform.OS === 'web') { window.alert('Preencha email e senha.'); }
+      else { Alert.alert('Atenção', 'Preencha email e senha.'); }
       return;
     }
     setLoading(true);
@@ -27,7 +34,8 @@ export default function LoginScreen() {
       await login(email.trim(), password);
       router.replace('/(tabs)');
     } catch (e: any) {
-      Alert.alert('Erro', e.message || 'Falha ao entrar');
+      if (Platform.OS === 'web') { window.alert('Erro: ' + (e.message || 'Falha ao entrar')); }
+      else { Alert.alert('Erro', e.message || 'Falha ao entrar'); }
     } finally {
       setLoading(false);
     }
@@ -42,7 +50,7 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.brand}>
             <View style={styles.brandMark}>
-              <Ionicons name="musical-notes" size={28} color={colors.gold} />
+              <Image source={APP_ICON} style={styles.brandIcon} resizeMode="cover" />
             </View>
             <Text style={styles.brandTitle}>LouvorApp</Text>
             <Text style={styles.brandSubtitle}>Gestão de ministério de louvor</Text>
@@ -99,11 +107,7 @@ export default function LoginScreen() {
               disabled={loading}
               activeOpacity={0.85}
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Entrar</Text>
-              )}
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Entrar</Text>}
             </TouchableOpacity>
 
             <View style={styles.divider}>
@@ -119,9 +123,7 @@ export default function LoginScreen() {
             </Link>
           </View>
 
-          <Text style={styles.footer}>
-            Construído com fé para o seu ministério.
-          </Text>
+          <Text style={styles.footer}>Construído com fé para o seu ministério.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -133,55 +135,32 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
   brand: { alignItems: 'center', marginBottom: spacing.xl },
   brandMark: {
-    width: 64, height: 64, borderRadius: 18,
-    backgroundColor: colors.primary,
-    alignItems: 'center', justifyContent: 'center',
+    width: 80, height: 80, borderRadius: 20,
+    overflow: 'hidden',
     marginBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
+  brandIcon: { width: 80, height: 80 },
   brandTitle: { fontSize: 28, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
   brandSubtitle: { fontSize: font.caption, color: colors.textSecondary, marginTop: 4 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
+  card: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
   title: { fontSize: font.h2, fontWeight: '700', color: colors.text, letterSpacing: -0.3 },
   subtitle: { fontSize: font.caption, color: colors.textSecondary, marginTop: 4, marginBottom: spacing.lg },
   field: { marginBottom: spacing.md },
   label: { fontSize: font.small, fontWeight: '700', color: colors.textSecondary, letterSpacing: 1, marginBottom: 6 },
   inputWrap: { position: 'relative' },
-  input: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-    fontSize: font.body,
-    color: colors.text,
-  },
+  input: { backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 14, fontSize: font.body, color: colors.text },
   eye: { position: 'absolute', right: 12, top: 14 },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.full,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
+  button: { backgroundColor: colors.primary, borderRadius: radius.full, paddingVertical: 16, alignItems: 'center', marginTop: spacing.sm },
   buttonText: { color: '#fff', fontSize: font.body, fontWeight: '600', letterSpacing: 0.3 },
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.lg },
   dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
   dividerText: { fontSize: font.small, color: colors.textMuted, marginHorizontal: spacing.sm, letterSpacing: 1 },
-  buttonGhost: {
-    backgroundColor: 'transparent',
-    borderRadius: radius.full,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
+  buttonGhost: { backgroundColor: 'transparent', borderRadius: radius.full, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   buttonGhostText: { color: colors.text, fontSize: font.body, fontWeight: '600' },
   footer: { textAlign: 'center', color: colors.textMuted, fontSize: font.small, marginTop: spacing.lg },
 });

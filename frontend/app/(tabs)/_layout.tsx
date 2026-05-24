@@ -26,7 +26,6 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        // item 8 anterior: lazy:false resolve tela branca no Android
         lazy: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
@@ -34,12 +33,14 @@ export default function TabsLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          // item 2: altura fixa que não transborda no ecrã
-          height: Platform.OS === 'ios' ? 80 : 58,
-          paddingBottom: Platform.OS === 'ios' ? 22 : 4,
-          paddingTop: 6,
+          // Deixar o sistema gerir a altura — não forçar valores fixos
+          // que colidem com a safe area do iOS
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          letterSpacing: 0.3,
+        },
       }}
     >
       <Tabs.Screen
@@ -70,7 +71,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="person-circle-outline" color={color} size={size} />,
         }}
       />
-      {/* Remove qualquer tab extra que possa estar a aparecer */}
     </Tabs>
   );
 }

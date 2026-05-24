@@ -28,6 +28,7 @@ type Ctx = {
   signup: (params: { name: string; email: string; password: string; ministry_name?: string; invite_code?: string }) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  setUser: (u: User) => void;
   isLeader: boolean;
   hasPermission: (p: string) => boolean;
 };
@@ -43,8 +44,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const tok = await getToken();
       if (tok) {
-        const me = await api<User>('/auth/me');
-        const m = await api<Ministry>('/ministry');
+        // Chamadas em paralelo — reduz o tempo de arranque a metade
+        const [me, m] = await Promise.all([
+          api<User>('/auth/me'),
+          api<Ministry>('/ministry'),
+        ]);
         setUser(me);
         setMinistry(m);
       }
@@ -82,8 +86,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refresh = async () => {
-    const me = await api<User>('/auth/me');
-    const m = await api<Ministry>('/ministry');
+    const [me, m] = await Promise.all([
+      api<User>('/auth/me'),
+      api<Ministry>('/ministry'),
+    ]);
     setUser(me);
     setMinistry(m);
   };
@@ -92,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasPermission = (p: string) => !!user && (user.role === 'leader' || user.permissions.includes(p));
 
   return (
-    <AuthContext.Provider value={{ user, ministry, loading, login, signup, logout, refresh, isLeader, hasPermission }}>
+    <AuthContext.Provider value={{ user, ministry, loading, login, signup, logout, refresh, setUser, isLeader, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

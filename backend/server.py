@@ -63,6 +63,7 @@ class UserOut(BaseModel):
     permissions: List[str] = []
     instruments: List[str] = []
     ministry_id: str
+    avatar: Optional[str] = ""
 
 class MinistryOut(BaseModel):
     id: str
@@ -89,6 +90,7 @@ class AuthResponse(BaseModel):
 class UpdateProfileReq(BaseModel):
     name: Optional[str] = None
     instruments: Optional[List[str]] = None
+    avatar: Optional[str] = None
 
 class UpdateMemberReq(BaseModel):
     role: Optional[Literal["leader", "member"]] = None
@@ -112,6 +114,7 @@ class ScaleReq(BaseModel):
     notes: Optional[str] = ""
     song_ids: List[str] = []
     musician_ids: List[str] = []
+    musician_instruments: Optional[dict] = {}
 
 class AnnouncementReq(BaseModel):
     title: str
@@ -152,6 +155,7 @@ def serialize_user(u: dict) -> UserOut:
         permissions=u.get("permissions", []),
         instruments=u.get("instruments", []),
         ministry_id=u["ministry_id"],
+        avatar=u.get("avatar", ""),
     )
 
 def serialize_ministry(m: dict, include_api_key: bool = True) -> MinistryOut:
@@ -289,6 +293,8 @@ async def update_me(req: UpdateProfileReq, user: dict = Depends(get_current_user
         updates["name"] = req.name.strip()
     if req.instruments is not None:
         updates["instruments"] = req.instruments
+    if req.avatar is not None:
+        updates["avatar"] = req.avatar
     if updates:
         await db.users.update_one({"_id": user["_id"]}, {"$set": updates})
         user.update(updates)
@@ -426,6 +432,7 @@ def serialize_scale(s: dict) -> dict:
         "notes": s.get("notes", ""),
         "song_ids": s.get("song_ids", []),
         "musician_ids": s.get("musician_ids", []),
+        "musician_instruments": s.get("musician_instruments", {}),
         "created_at": s.get("created_at", ""),
     }
 
@@ -454,6 +461,7 @@ async def create_scale(req: ScaleReq, user: dict = Depends(require_perm(PERM_EDI
         "notes": req.notes or "",
         "song_ids": req.song_ids,
         "musician_ids": req.musician_ids,
+        "musician_instruments": req.musician_instruments or {},
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.scales.insert_one(scale)

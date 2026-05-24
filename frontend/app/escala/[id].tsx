@@ -19,6 +19,8 @@ type Scale = {
   notes: string;
   song_ids: string[];
   musician_ids: string[];
+  // instrumento por músico salvo na escala
+  musician_instruments?: Record<string, string>;
 };
 
 type Song = { id: string; title: string; artist: string; key: string; bpm: number | null };
@@ -63,17 +65,12 @@ export default function ScaleDetail() {
         await api(`/scales/${id}`, { method: 'DELETE' });
         router.back();
       } catch (e: any) {
-        if (Platform.OS === 'web') {
-          window.alert('Erro: ' + e.message);
-        } else {
-          Alert.alert('Erro', e.message);
-        }
+        if (Platform.OS === 'web') { window.alert('Erro: ' + e.message); }
+        else { Alert.alert('Erro', e.message); }
       }
     };
-
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Excluir esta escala? Esta ação não pode ser desfeita.');
-      if (confirmed) doDelete();
+      if (window.confirm('Excluir esta escala? Esta ação não pode ser desfeita.')) doDelete();
     } else {
       Alert.alert('Excluir escala', 'Esta ação não pode ser desfeita.', [
         { text: 'Cancelar', style: 'cancel' },
@@ -83,13 +80,17 @@ export default function ScaleDetail() {
   };
 
   if (loading || !scale) {
-    return (
-      <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>
-    );
+    return <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>;
   }
 
-  const setlist = scale.song_ids.map(sid => songs.find(s => s.id === sid)).filter(Boolean) as Song[];
-  const musicians = scale.musician_ids.map(mid => members.find(m => m.id === mid)).filter(Boolean) as Member[];
+  const setlist = scale.song_ids
+    .map(sid => songs.find(s => s.id === sid))
+    .filter(Boolean) as Song[];
+
+  const musicians = scale.musician_ids
+    .map(mid => members.find(m => m.id === mid))
+    .filter(Boolean) as Member[];
+
   const canEdit = hasPermission('edit_scales');
 
   return (
@@ -101,7 +102,6 @@ export default function ScaleDetail() {
         <Text style={styles.headerTitle} numberOfLines={1}>Escala</Text>
         {canEdit ? (
           <View style={styles.headerActions}>
-            {/* item 3: botão de editar escala */}
             <TouchableOpacity
               testID="edit-scale-button"
               onPress={() => router.push(`/escala/nova?edit=${id}`)}
@@ -119,6 +119,7 @@ export default function ScaleDetail() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {/* Hero */}
         <View style={styles.hero}>
           <Text style={styles.heroLabel}>EVENTO</Text>
           <Text style={styles.heroTitle}>{scale.title}</Text>
@@ -145,6 +146,7 @@ export default function ScaleDetail() {
           </View>
         ) : null}
 
+        {/* Repertório — lista numerada (item 2) */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Repertório ({setlist.length})</Text>
           {setlist.length === 0 ? (
@@ -155,6 +157,7 @@ export default function ScaleDetail() {
               style={styles.songRow}
               onPress={() => router.push(`/musica/${s.id}`)}
               testID={`detail-song-${s.id}`}
+              activeOpacity={0.7}
             >
               <Text style={styles.songNum}>{String(idx + 1).padStart(2, '0')}</Text>
               <View style={{ flex: 1 }}>
@@ -165,32 +168,35 @@ export default function ScaleDetail() {
                 {s.key ? <Text style={styles.songKey}>{s.key}</Text> : null}
                 {s.bpm ? <Text style={styles.songBpm}>{s.bpm}bpm</Text> : null}
               </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
             </TouchableOpacity>
           ))}
         </View>
 
+        {/* Músicos — lista (item 2), instrumento da escala (item 3) */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Músicos ({musicians.length})</Text>
           {musicians.length === 0 ? (
             <Text style={styles.muted}>Sem músicos atribuídos</Text>
-          ) : (
-            <View style={styles.musiciansWrap}>
-              {musicians.map((m) => (
-                <View key={m.id} style={styles.musician} testID={`detail-musician-${m.id}`}>
-                  <View style={styles.mAvatar}>
-                    <Text style={styles.mAvatarText}>{m.name.charAt(0).toUpperCase()}</Text>
-                  </View>
+          ) : musicians.map((m) => {
+            // Instrumento escolhido ao inserir nesta escala (item 3)
+            const instrument = scale.musician_instruments?.[m.id] ?? '';
+            return (
+              <View key={m.id} style={styles.musicianRow} testID={`detail-musician-${m.id}`}>
+                <View style={styles.mAvatar}>
+                  <Text style={styles.mAvatarText}>{m.name.charAt(0).toUpperCase()}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.mName}>{m.name}</Text>
-                  {m.instruments && m.instruments.length > 0 ? (
-                    <Text style={styles.mInstrument}>{m.instruments.join(', ')}</Text>
+                  {instrument ? (
+                    <Text style={styles.mInstrument}>{instrument}</Text>
                   ) : null}
                 </View>
-              ))}
-            </View>
-          )}
+              </View>
+            );
+          })}
         </View>
 
-        {/* Botão de editar no rodapé para acesso rápido (item 3) */}
         {canEdit && (
           <TouchableOpacity
             testID="edit-scale-bottom-button"
@@ -220,10 +226,8 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text },
   scroll: { padding: spacing.md, paddingBottom: spacing.xl },
   hero: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
+    backgroundColor: colors.primary, borderRadius: radius.xl,
+    padding: spacing.lg, marginBottom: spacing.md,
   },
   heroLabel: { fontSize: font.small, color: colors.gold, fontWeight: '700', letterSpacing: 1.5 },
   heroTitle: { fontSize: 24, color: '#fff', fontWeight: '700', marginTop: 4, marginBottom: spacing.sm, letterSpacing: -0.3 },
@@ -234,8 +238,9 @@ const styles = StyleSheet.create({
   notesCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   notesText: { fontSize: font.body, color: colors.text, lineHeight: 22 },
   muted: { color: colors.textMuted, fontSize: font.caption },
+  // Músicas — lista
   songRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md,
     borderWidth: 1, borderColor: colors.border, marginBottom: 6,
   },
@@ -245,22 +250,25 @@ const styles = StyleSheet.create({
   songMeta: { alignItems: 'flex-end' },
   songKey: { fontSize: font.caption, fontWeight: '700', color: colors.text },
   songBpm: { fontSize: font.small, color: colors.textMuted, marginTop: 2 },
-  musiciansWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  musician: {
-    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md,
-    borderWidth: 1, borderColor: colors.border, alignItems: 'center',
-    minWidth: 100, flexGrow: 1,
+  // Músicos — lista (não blocos)
+  musicianRow: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md,
+    borderWidth: 1, borderColor: colors.border, marginBottom: 6,
   },
-  mAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
-  mAvatarText: { color: '#fff', fontWeight: '700' },
-  mName: { fontSize: font.caption, fontWeight: '600', color: colors.text },
+  mAvatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  mAvatarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  mName: { fontSize: font.body, fontWeight: '600', color: colors.text },
   mInstrument: { fontSize: font.small, color: colors.textSecondary, marginTop: 2 },
   editBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: colors.primary,
-    borderRadius: radius.full,
-    paddingVertical: 16,
-    marginTop: spacing.sm,
+    backgroundColor: colors.primary, borderRadius: radius.full,
+    paddingVertical: 16, marginTop: spacing.sm,
   },
   editBtnText: { color: '#fff', fontSize: font.body, fontWeight: '600' },
 });
