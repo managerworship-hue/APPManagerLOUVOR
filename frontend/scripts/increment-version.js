@@ -21,14 +21,24 @@ function incrementVersion(versionStr) {
 try {
   // 2. Read and update version.json
   let currentVersion = '2.0.0';
-  if (fs.existsSync(versionJsonPath)) {
-    const versionData = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
-    currentVersion = versionData.version || '2.0.0';
+  if (fs.existsSync(packageJsonPath)) {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    currentVersion = pkg.version || '2.0.0';
   }
 
   const nextVersion = incrementVersion(currentVersion);
-  fs.writeFileSync(versionJsonPath, JSON.stringify({ version: nextVersion }, null, 2) + '\n', 'utf8');
-  console.log(`📈 App version bumped from ${currentVersion} to ${nextVersion}`);
+  
+  // Generate build timestamp: DD/MM HH:MM
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const buildTimestamp = `${pad(now.getDate())}/${pad(now.getMonth() + 1)} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  fs.writeFileSync(
+    versionJsonPath, 
+    JSON.stringify({ version: nextVersion, build: buildTimestamp }, null, 2) + '\n', 
+    'utf8'
+  );
+  console.log(`📈 App version bumped from ${currentVersion} to ${nextVersion} (Build: ${buildTimestamp})`);
 
   // 3. Update package.json
   if (fs.existsSync(packageJsonPath)) {
