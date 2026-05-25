@@ -357,6 +357,12 @@ async def signup(req: SignupReq):
     # Notificar líderes e enviar boas-vindas
     if role == ROLE_MEMBER:
         await create_notification(user["_id"], "Bem-vindo! 👋", f"Bem-vindo ao ministério {ministry['name']}!", "welcome")
+        await send_push_to_users(
+            [user["_id"]],
+            title="Bem-vindo! 👋",
+            body=f"Bem-vindo ao ministério {ministry['name']}!",
+            url="/",
+        )
         leaders = await db.users.find({"ministry_id": ministry["_id"], "role": ROLE_LEADER}).to_list(None)
         leader_ids = [l["_id"] for l in leaders]
         if leader_ids:
@@ -370,6 +376,12 @@ async def signup(req: SignupReq):
             )
     else:
         await create_notification(user["_id"], "Boas-vindas! 🌟", f"Seu ministério '{ministry['name']}' foi criado com sucesso!", "welcome")
+        await send_push_to_users(
+            [user["_id"]],
+            title="Boas-vindas! 🌟",
+            body=f"Seu ministério '{ministry['name']}' foi criado com sucesso!",
+            url="/",
+        )
 
     return AuthResponse(
         token=make_token(user["_id"], ministry["_id"]),
@@ -863,7 +875,7 @@ async def create_scale(req: ScaleReq, user: dict = Depends(require_leader)):
     }
     await db.scales.insert_one(scale)
 
-    # Notificar membros sobre a nova escala
+    # Notificar membros sobre a nova escala (In-app + Push)
     musician_set = set(req.musician_ids)
     all_members = await db.users.find({"ministry_id": user["ministry_id"]}).to_list(None)
     
@@ -872,6 +884,7 @@ async def create_scale(req: ScaleReq, user: dict = Depends(require_leader)):
         if m_id == user["_id"]:
             continue
         if m_id in musician_set:
+            # In-App
             await create_notification(
                 m_id, 
                 "Você foi escalado! 📅", 
@@ -879,7 +892,15 @@ async def create_scale(req: ScaleReq, user: dict = Depends(require_leader)):
                 "scale_added", 
                 f"/escala/{scale['_id']}"
             )
+            # Push personalizado
+            await send_push_to_users(
+                [m_id],
+                title="Você foi escalado! 📅",
+                body=f"Você foi adicionado à escala '{req.title.strip()}' no dia {req.date}.",
+                url=f"/escala/{scale['_id']}"
+            )
         else:
+            # In-App
             await create_notification(
                 m_id, 
                 "Nova escala criada 🗓️", 
@@ -887,16 +908,13 @@ async def create_scale(req: ScaleReq, user: dict = Depends(require_leader)):
                 "scale_created", 
                 "/escalas"
             )
-
-    members = await db.users.find({"ministry_id": user["ministry_id"], "_id": {"$ne": user["_id"]}}).to_list(None)
-    member_ids = [m["_id"] for m in members]
-    if member_ids:
-        await send_push_to_users(
-            member_ids,
-            title="Nova escala criada 📅",
-            body=f"{req.title.strip()} — {req.date}",
-            url="/escalas",
-        )
+            # Push personalizado
+            await send_push_to_users(
+                [m_id],
+                title="Nova escala criada 🗓️",
+                body=f"Uma nova escala '{req.title.strip()}' foi criada no dia {req.date}.",
+                url="/escalas"
+            )
 
     return serialize_scale(scale)
 
