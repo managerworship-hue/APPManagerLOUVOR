@@ -779,8 +779,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:8081",
-        "https://appmanager-louvor.onrender.com"  # ← URL real do Static Site
+        "http://localhost:3000",
+        "http://localhost:8001",
+        "http://localhost:10000",
+        "https://appmanager-louvor.onrender.com",  # ← URL real do Static Site
+        "https://setlist-metronomo-app.onrender.com"  # ← URL real da App Metrónomo
     ],
+    allow_origin_regex=r"https?://.*\.emergent.*", # Permite domínios de preview
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
