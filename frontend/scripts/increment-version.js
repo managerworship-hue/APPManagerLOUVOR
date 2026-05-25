@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const projectRoot = path.join(__dirname, '..');
 
@@ -8,13 +9,33 @@ const versionJsonPath = path.join(projectRoot, 'src', 'version.json');
 const packageJsonPath = path.join(projectRoot, 'package.json');
 const appJsonPath = path.join(projectRoot, 'app.json');
 
-// Helper to safely parse and increment version "X.Y.Z"
-function incrementVersion(versionStr) {
+// Helper to get Git commit count
+function getGitCommitCount() {
+  try {
+    const countStr = execSync('git rev-list --count HEAD', { stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8' }).trim();
+    const count = parseInt(countStr, 10);
+    return isNaN(count) ? null : count;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Helper to safely parse and calculate version "X.Y.Z"
+function calculateVersion(versionStr) {
   const parts = versionStr.split('.').map(Number);
   if (parts.length !== 3 || parts.some(isNaN)) {
     return '2.0.0'; // Fallback starting version
   }
-  parts[2] += 1; // Increment the patch version
+
+  // Tentar obter o número de commits do Git
+  const commitCount = getGitCommitCount();
+  if (commitCount !== null && commitCount > 0) {
+    parts[2] = commitCount; // Define o patch como o número de commits do Git
+    return parts.join('.');
+  }
+
+  // Fallback: Apenas incrementa +1 (para desenvolvimento local se git não estiver no path)
+  parts[2] += 1;
   return parts.join('.');
 }
 
@@ -26,7 +47,7 @@ try {
     currentVersion = pkg.version || '2.0.0';
   }
 
-  const nextVersion = incrementVersion(currentVersion);
+  const nextVersion = calculateVersion(currentVersion);
   
   // Generate build timestamp: DD/MM HH:MM
   const now = new Date();
