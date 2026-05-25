@@ -8,7 +8,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
 import { api, API_BASE } from '@/src/api/client';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 
 const ENDPOINTS = [
   {
@@ -44,6 +45,8 @@ const JESUSMEAJUDA_STEPS = [
 
 
 export default function ApiDocs() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const router = useRouter();
   const { ministry, isLeader, refresh } = useAuth();
   const [revealed, setRevealed] = useState(false);
@@ -227,7 +230,7 @@ export default function ApiDocs() {
 }
 
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
   headerBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },

@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '@/src/context/AuthContext';
+import { ThemeProvider, useTheme } from '@/src/context/ThemeContext';
 
 export default function RootLayout() {
   useEffect(() => {
@@ -51,18 +52,30 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F9F9F8' } }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="register" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="escala/nova" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="musica/nova" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="aviso/novo" options={{ presentation: 'modal' }} />
-        </Stack>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppNavigation />
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
+  );
+}
+
+function AppNavigation() {
+  const { theme, colors } = useTheme();
+
+  return (
+    <>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="escala/nova" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="musica/nova" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="aviso/novo" options={{ presentation: 'modal' }} />
+      </Stack>
+    </>
   );
 }

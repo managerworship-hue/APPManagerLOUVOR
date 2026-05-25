@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Platform, StyleSheet, Modal } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 
 type Props = {
   value: string; // YYYY-MM-DD
@@ -31,6 +32,8 @@ function displayDate(s: string): string {
 }
 
 export function DatePickerField({ value, onChange, placeholder = 'Selecionar data', testID }: Props) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [show, setShow] = useState(false);
 
   // Web: native HTML date input
@@ -156,6 +159,8 @@ export function DatePickerField({ value, onChange, placeholder = 'Selecionar dat
 }
 
 export function TimePickerField({ value, onChange, placeholder = 'Selecionar horário', testID }: Props) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [show, setShow] = useState(false);
 
   if (Platform.OS === 'web') {
@@ -288,7 +293,7 @@ export function TimePickerField({ value, onChange, placeholder = 'Selecionar hor
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   webWrap: {
     flexDirection: 'row',
     alignItems: 'center',

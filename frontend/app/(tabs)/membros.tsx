@@ -8,7 +8,8 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
 import { useAuth } from '@/src/context/AuthContext';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 
 type Member = {
   id: string;
@@ -44,6 +45,8 @@ function showError(message: string) {
 }
 
 export default function MembrosScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const router = useRouter();
   const { isLeader, user: me } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
@@ -221,7 +224,7 @@ export default function MembrosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

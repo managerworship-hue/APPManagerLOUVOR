@@ -9,7 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
 import { useAuth } from '@/src/context/AuthContext';
 import { storage } from '@/src/utils/storage';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 
 type Song = {
   id: string;
@@ -22,6 +23,8 @@ type Song = {
 };
 
 export default function RepertorioScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const router = useRouter();
   const { hasPermission, isLeader } = useAuth();
   const [items, setItems] = useState<Song[]>([]);
@@ -152,7 +155,7 @@ export default function RepertorioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.md, paddingBottom: spacing.sm },
   title: { fontSize: font.h1, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },

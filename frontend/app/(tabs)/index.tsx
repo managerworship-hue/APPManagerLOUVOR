@@ -8,7 +8,8 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
 import { useAuth } from '@/src/context/AuthContext';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 import { formatDay, formatMonth, formatRelative } from '@/src/utils/date';
 
 type Stats = {
@@ -28,6 +29,8 @@ type Announcement = {
 };
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const router = useRouter();
   const { user, ministry, isLeader } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -205,7 +208,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: spacing.md, paddingBottom: spacing.xl },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },

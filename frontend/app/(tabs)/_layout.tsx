@@ -5,9 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Platform, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/context/AuthContext';
-import { colors } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
   const router = useRouter();
   const { user, loading } = useAuth();
   const insets = useSafeAreaInsets();

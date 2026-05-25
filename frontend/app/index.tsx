@@ -2,9 +2,11 @@ import React, { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
-import { colors } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function Index() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -24,6 +26,6 @@ export default function Index() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
 });

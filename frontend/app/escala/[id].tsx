@@ -7,7 +7,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
 import { useAuth } from '@/src/context/AuthContext';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 import { formatDate } from '@/src/utils/date';
 
 type Scale = {
@@ -27,6 +28,8 @@ type Song = { id: string; title: string; artist: string; key: string; bpm: numbe
 type Member = { id: string; name: string; instruments: string[]; avatar?: string };
 
 export default function ScaleDetail() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { hasPermission, isLeader } = useAuth();
@@ -217,7 +220,7 @@ export default function ScaleDetail() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   header: {

@@ -7,7 +7,8 @@ import { useRouter, Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 
 // Ícone: na web usa URL pública; no nativo usa require local
 const APP_ICON =
@@ -16,6 +17,8 @@ const APP_ICON =
     : require('../assets/images/icon.png');
 
 export default function LoginScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -130,7 +133,7 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
   brand: { alignItems: 'center', marginBottom: spacing.xl },

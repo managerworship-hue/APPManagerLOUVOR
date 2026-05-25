@@ -9,7 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
 import { api } from '@/src/api/client';
 import { storage } from '@/src/utils/storage';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 
 const INSTRUMENT_LIST = [
   'Violão', 'Guitarra', 'Baixo', 'Teclado', 'Piano', 'Bateria', 'Percussão',
@@ -25,8 +26,11 @@ const AVATARS = [
 ];
 
 export default function ProfileScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const router = useRouter();
   const { user, ministry, isLeader, logout, setUser } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const [instrumentModal, setInstrumentModal] = useState(false);
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>(user?.instruments ?? []);
@@ -391,6 +395,20 @@ export default function ProfileScreen() {
                 <Text style={styles.actionSubtitle}>Escolher avatar</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <View style={styles.actionDivider} />
+
+            {/* Modo Escuro */}
+            <TouchableOpacity style={styles.action} onPress={toggleTheme} activeOpacity={0.7}>
+              <View style={[styles.actionIcon, { backgroundColor: theme === 'dark' ? '#333' : '#E6F0EA' }]}>
+                <Ionicons name={theme === 'dark' ? 'moon' : 'sunny-outline'} size={18} color={theme === 'dark' ? '#FBBF24' : colors.success} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.actionTitle}>Modo Escuro</Text>
+                <Text style={styles.actionSubtitle}>{theme === 'dark' ? 'Ativo' : 'Desativado'}</Text>
+              </View>
+              <Ionicons name={theme === 'dark' ? 'toggle' : 'toggle-outline'} size={28} color={theme === 'dark' ? colors.success : colors.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
@@ -863,7 +881,7 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: spacing.md, paddingBottom: spacing.xl },
   title: { fontSize: font.h1, fontWeight: '700', color: colors.text, letterSpacing: -0.5, marginBottom: spacing.lg },

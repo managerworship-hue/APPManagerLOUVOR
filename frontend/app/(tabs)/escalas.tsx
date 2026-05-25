@@ -8,7 +8,8 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
 import { useAuth } from '@/src/context/AuthContext';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 import { formatDay, formatMonth } from '@/src/utils/date';
 
 type Scale = {
@@ -22,6 +23,8 @@ type Scale = {
 };
 
 export default function ScalesScreen() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const router = useRouter();
   const { hasPermission, isLeader } = useAuth();
   const [items, setItems] = useState<Scale[]>([]);
@@ -129,7 +132,7 @@ export default function ScalesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.md, paddingBottom: spacing.sm },
   title: { fontSize: font.h1, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },

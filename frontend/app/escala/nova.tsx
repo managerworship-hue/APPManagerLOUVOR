@@ -9,7 +9,8 @@ import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
 import { DatePickerField, TimePickerField } from '@/src/components/DateTimePickerField';
-import { colors, radius, font, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { radius, font, spacing } from '@/src/theme';
 
 type Song = { id: string; title: string; artist: string };
 type Member = { id: string; name: string; instruments?: string[] };
@@ -21,6 +22,8 @@ function showAlert(msg: string) {
 }
 
 export default function NovaEscala() {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const router = useRouter();
   const params = useLocalSearchParams<{ edit?: string }>();
   const editId = params.edit ?? null;
@@ -324,6 +327,8 @@ export default function NovaEscala() {
 }
 
 function Field({ label, children, style }: any) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <View style={[{ marginBottom: spacing.md }, style]}>
       <Text style={styles.label}>{label}</Text>
@@ -332,7 +337,7 @@ function Field({ label, children, style }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   headerBtn: { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
