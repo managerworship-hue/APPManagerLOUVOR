@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
 import { useAuth } from '@/src/context/AuthContext';
 import { useTheme } from '@/src/context/ThemeContext';
+import { storage } from '@/src/utils/storage';
 import { radius, font, spacing } from '@/src/theme';
 import { formatDay, formatMonth } from '@/src/utils/date';
 
@@ -33,13 +34,22 @@ export default function ScalesScreen() {
 
   const load = useCallback(async () => {
     try {
+      // 1. Carregar instantaneamente do cache local
+      const cached = (await storage.getItem('cached_scales', [] as any)) as Scale[] | null;
+      if (cached && cached.length > 0 && items.length === 0) {
+        setItems(cached);
+        setLoading(false);
+      }
+
+      // 2. Buscar dados frescos da API
       const r = await api<Scale[]>('/scales');
       setItems(r);
+      await storage.setItem('cached_scales', r as any);
     } catch {} finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [items.length]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -64,7 +74,7 @@ export default function ScalesScreen() {
         )}
       </View>
 
-      {loading ? (
+      {loading && items.length === 0 ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
       ) : items.length === 0 ? (
         <View style={styles.empty}>

@@ -8,6 +8,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
 import { useAuth } from '@/src/context/AuthContext';
+import { storage } from '@/src/utils/storage';
 import { useTheme } from '@/src/context/ThemeContext';
 import { radius, font, spacing } from '@/src/theme';
 import { formatDay, formatMonth, formatRelative } from '@/src/utils/date';
@@ -40,19 +41,39 @@ export default function HomeScreen() {
 
   const load = useCallback(async () => {
     try {
+      // 1. Carregar instantaneamente do cache para exibição imediata
+      const [cachedStats, cachedAnn] = await Promise.all([
+        storage.getItem('cached_stats', null) as Promise<Stats | null>,
+        storage.getItem('cached_announcements', [] as any) as Promise<Announcement[] | null>,
+      ]);
+
+      if (cachedStats && stats === null) {
+        setStats(cachedStats);
+        if (cachedAnn) {
+          setAnnouncements(cachedAnn.slice(0, 3));
+        }
+        setLoading(false);
+      }
+
+      // 2. Buscar dados frescos em segundo plano
       const [s, a] = await Promise.all([
         api<Stats>('/stats'),
         api<Announcement[]>('/announcements'),
       ]);
       setStats(s);
       setAnnouncements(a.slice(0, 3));
+
+      await Promise.all([
+        storage.setItem('cached_stats', s as any),
+        storage.setItem('cached_announcements', a as any),
+      ]);
     } catch {
       // ignore
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [stats]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 

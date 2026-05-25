@@ -34,13 +34,22 @@ export default function RepertorioScreen() {
 
   const load = useCallback(async () => {
     try {
+      // 1. Carregar instantaneamente do cache local
+      const cached = (await storage.getItem('cached_songs', [] as any)) as Song[] | null;
+      if (cached && cached.length > 0 && items.length === 0) {
+        setItems(cached);
+        setLoading(false);
+      }
+
+      // 2. Buscar dados frescos da API
       const r = await api<Song[]>('/songs');
       setItems(r);
+      await storage.setItem('cached_songs', r as any);
     } catch {} finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [items.length]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 

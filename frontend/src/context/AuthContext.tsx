@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Platform } from 'react-native';
 import { api, setToken, clearToken, getToken } from '@/src/api/client';
+import { storage } from '@/src/utils/storage';
 
 export type User = {
   id: string;
@@ -56,20 +57,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const tok = await getToken();
       if (tok) {
-        const [me, m] = await Promise.all([
+        // 1. Carregar instantaneamente do cache local para desbloquear a UI em milissegundos
+        const [cachedUser, cachedMin] = await Promise.all([
+          storage.getItem('cached_user', null) as Promise<User | null>,
+          storage.getItem('cached_ministry', null) as Promise<Ministry | null>,
+        ]);
+        if (cachedUser && cachedMin) {
+          setUser(cachedUser);
+          setMinistry(cachedMin);
+          setLoading(false);
+        }
+
+        // 2. Revalidar em segundo plano
+        Promise.all([
           api<User>('/auth/me'),
           api<Ministry>('/ministry'),
-        ]);
-        setUser(me);
-        setMinistry(m);
-        // Registar push ao retomar sessão
+        ]).then(async ([me, m]) => {
+          setUser(me);
+          setMinistry(m);
+          await Promise.all([
+            storage.setItem('cached_user', me as any),
+            storage.setItem('cached_ministry', m as any),
+          ]);
+        }).catch(async (err) => {
+          console.log('Erro ao revalidar sessão:', err);
+          // Se for erro de autenticação, desconecta
+          if (err.message?.includes('401') || err.message?.includes('não autenticado') || err.message?.includes('token')) {
+            await clearToken();
+            await Promise.all([
+              storage.removeItem('cached_user'),
+              storage.removeItem('cached_ministry'),
+            ]);
+            setUser(null);
+            setMinistry(null);
+          }
+        }).finally(() => {
+          setLoading(false);
+        });
+
         tryRegisterPush();
+      } else {
+        setLoading(false);
       }
     } catch {
       await clearToken();
+      await Promise.all([
+        storage.removeItem('cached_user'),
+        storage.removeItem('cached_ministry'),
+      ]);
       setUser(null);
       setMinistry(null);
-    } finally {
       setLoading(false);
     }
   }, []);
@@ -81,6 +118,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await setToken(r.token);
     setUser(r.user);
     setMinistry(r.ministry);
+    await Promise.all([
+      storage.setItem('cached_user', r.user as any),
+      storage.setItem('cached_ministry', r.ministry as any),
+    ]);
     tryRegisterPush();
   };
 
@@ -89,6 +130,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await setToken(r.token);
     setUser(r.user);
     setMinistry(r.ministry);
+    await Promise.all([
+      storage.setItem('cached_user', r.user as any),
+      storage.setItem('cached_ministry', r.ministry as any),
+    ]);
     tryRegisterPush();
   };
 
@@ -101,6 +146,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
     }
     await clearToken();
+    await Promise.all([
+      storage.removeItem('cached_user'),
+      storage.removeItem('cached_ministry'),
+      storage.removeItem('cached_stats'),
+      storage.removeItem('cached_announcements'),
+      storage.removeItem('cached_songs'),
+      storage.removeItem('cached_scales'),
+    ]);
     setUser(null);
     setMinistry(null);
   };
