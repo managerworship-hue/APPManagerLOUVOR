@@ -586,9 +586,10 @@ async def import_from_google_drive(req: GoogleDriveImportReq, user: dict = Depen
                     
                 first_line = lines[0]
                 
-                # Regex: [NOME DA MUSICA - "TOM" - BPM] ou NOME DA MUSICA - TOM - BPM
+                # Regex robusto que aceita:
+                # [NOME DA MUSICA - TOM - BPM] ou NOME DA MUSICA - TOM - 70 BPM ou NOME - TOM - BPM 70 (e acordes como C#m7 ou D/F#)
                 match = re.match(
-                    r"(?:\[)?\s*([^-\[\]]+?)\s*-\s*(?:\"|')?([A-G][#b]?(?:m)?)(?:\"|')?\s*-\s*(\d{2,3})\s*(?:\])?", 
+                    r"(?:\[)?\s*([^-\[\]]+?)\s*-\s*(?:\"|')?([A-G][#b]?[a-zA-Z0-9\/]*)(?:\"|')?\s*-\s*(?:[Bb][Pp][Mm])?\s*(\d{2,3})\s*(?:[Bb][Pp][Mm])?\s*(?:\])?", 
                     first_line
                 )
                 
