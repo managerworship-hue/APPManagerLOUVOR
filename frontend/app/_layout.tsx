@@ -59,14 +59,8 @@ export default function RootLayout() {
           <Stack.Screen name="register" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="escala/nova" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="escala/[id]" />
           <Stack.Screen name="musica/nova" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="musica/[id]" />
           <Stack.Screen name="aviso/novo" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="aviso/[id]" />
-          <Stack.Screen name="membros" />
-          <Stack.Screen name="convidar" />
-          <Stack.Screen name="api-docs" />
         </Stack>
       </AuthProvider>
     </SafeAreaProvider>

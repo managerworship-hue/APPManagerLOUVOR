@@ -29,7 +29,7 @@ type Member = { id: string; name: string; instruments: string[]; avatar?: string
 export default function ScaleDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { hasPermission } = useAuth();
+  const { hasPermission, isLeader } = useAuth();
   const [scale, setScale] = useState<Scale | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -91,7 +91,7 @@ export default function ScaleDetail() {
     .map(mid => members.find(m => m.id === mid))
     .filter(Boolean) as Member[];
 
-  const canEdit = hasPermission('edit_scales');
+  const canEdit = isLeader;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>

@@ -151,6 +151,7 @@ class ScaleReq(BaseModel):
     notes: Optional[str] = ""
     song_ids: List[str] = []
     musician_ids: List[str] = []
+    musician_instruments: Optional[dict] = {}
 
 class AnnouncementReq(BaseModel):
     title: str
@@ -452,7 +453,7 @@ async def get_song(song_id: str, user: dict = Depends(get_current_user)):
     return serialize_song(s)
 
 @api_router.post("/songs")
-async def create_song(req: SongReq, user: dict = Depends(require_perm(PERM_EDIT_SONGS))):
+async def create_song(req: SongReq, user: dict = Depends(require_leader)):
     song = {
         "_id": str(uuid.uuid4()),
         "ministry_id": user["ministry_id"],
@@ -469,7 +470,7 @@ async def create_song(req: SongReq, user: dict = Depends(require_perm(PERM_EDIT_
     return serialize_song(song)
 
 @api_router.put("/songs/{song_id}")
-async def update_song(song_id: str, req: SongReq, user: dict = Depends(require_perm(PERM_EDIT_SONGS))):
+async def update_song(song_id: str, req: SongReq, user: dict = Depends(require_leader)):
     s = await db.songs.find_one({"_id": song_id, "ministry_id": user["ministry_id"]})
     if not s:
         raise HTTPException(status_code=404, detail="Música não encontrada")
@@ -479,7 +480,7 @@ async def update_song(song_id: str, req: SongReq, user: dict = Depends(require_p
     return serialize_song(s)
 
 @api_router.delete("/songs/{song_id}")
-async def delete_song(song_id: str, user: dict = Depends(require_perm(PERM_EDIT_SONGS))):
+async def delete_song(song_id: str, user: dict = Depends(require_leader)):
     res = await db.songs.delete_one({"_id": song_id, "ministry_id": user["ministry_id"]})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Música não encontrada")
@@ -498,6 +499,7 @@ def serialize_scale(s: dict) -> dict:
         "notes": s.get("notes", ""),
         "song_ids": s.get("song_ids", []),
         "musician_ids": s.get("musician_ids", []),
+        "musician_instruments": s.get("musician_instruments", {}),
         "created_at": s.get("created_at", ""),
     }
 
@@ -515,7 +517,7 @@ async def get_scale(scale_id: str, user: dict = Depends(get_current_user)):
     return serialize_scale(s)
 
 @api_router.post("/scales")
-async def create_scale(req: ScaleReq, user: dict = Depends(require_perm(PERM_EDIT_SCALES))):
+async def create_scale(req: ScaleReq, user: dict = Depends(require_leader)):
     scale = {
         "_id": str(uuid.uuid4()),
         "ministry_id": user["ministry_id"],
@@ -545,7 +547,7 @@ async def create_scale(req: ScaleReq, user: dict = Depends(require_perm(PERM_EDI
     return serialize_scale(scale)
 
 @api_router.put("/scales/{scale_id}")
-async def update_scale(scale_id: str, req: ScaleReq, user: dict = Depends(require_perm(PERM_EDIT_SCALES))):
+async def update_scale(scale_id: str, req: ScaleReq, user: dict = Depends(require_leader)):
     s = await db.scales.find_one({"_id": scale_id, "ministry_id": user["ministry_id"]})
     if not s:
         raise HTTPException(status_code=404, detail="Escala não encontrada")
@@ -580,7 +582,7 @@ async def update_scale(scale_id: str, req: ScaleReq, user: dict = Depends(requir
     return serialize_scale(s)
 
 @api_router.delete("/scales/{scale_id}")
-async def delete_scale(scale_id: str, user: dict = Depends(require_perm(PERM_EDIT_SCALES))):
+async def delete_scale(scale_id: str, user: dict = Depends(require_leader)):
     res = await db.scales.delete_one({"_id": scale_id, "ministry_id": user["ministry_id"]})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Escala não encontrada")

@@ -22,7 +22,7 @@ type Song = {
 
 export default function RepertorioScreen() {
   const router = useRouter();
-  const { hasPermission } = useAuth();
+  const { hasPermission, isLeader } = useAuth();
   const [items, setItems] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -49,7 +49,7 @@ export default function RepertorioScreen() {
     );
   }, [items, query]);
 
-  const canEdit = hasPermission('edit_songs');
+  const canEdit = isLeader;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

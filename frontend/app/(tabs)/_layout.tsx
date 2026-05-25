@@ -77,6 +77,42 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="person-circle-outline" color={color} size={size} />,
         }}
       />
+      <Tabs.Screen
+        name="membros"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="convidar"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="api-docs"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="escala/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="musica/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="aviso/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

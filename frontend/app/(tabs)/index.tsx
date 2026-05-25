@@ -63,7 +63,15 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting} testID="home-greeting">Olá, {user?.name?.split(' ')[0]}</Text>
-            <Text style={styles.ministryName}>{ministry?.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <Text style={styles.ministryName}>{ministry?.name}</Text>
+              {isLeader && (
+                <View style={styles.leaderTag}>
+                  <Ionicons name="star" size={10} color={colors.gold} />
+                  <Text style={styles.leaderText}>LÍDER</Text>
+                </View>
+              )}
+            </View>
           </View>
           {/* Convidar: apenas líder */}
           {isLeader && (
@@ -202,7 +210,22 @@ const styles = StyleSheet.create({
   scroll: { padding: spacing.md, paddingBottom: spacing.xl },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
   greeting: { fontSize: font.h2, fontWeight: '700', color: colors.text, letterSpacing: -0.3 },
-  ministryName: { fontSize: font.caption, color: colors.textSecondary, marginTop: 2 },
+  ministryName: { fontSize: font.caption, color: colors.textSecondary },
+  leaderTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#F2EBDB',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  leaderText: {
+    fontSize: 9,
+    color: colors.gold,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
   nextCard: { backgroundColor: colors.primary, borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.md, overflow: 'hidden', position: 'relative' },
   nextOverlay: { position: 'absolute', right: -20, top: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(197,160,89,0.15)' },

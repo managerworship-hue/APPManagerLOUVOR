@@ -24,7 +24,7 @@ type Song = {
 export default function SongDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { hasPermission } = useAuth();
+  const { hasPermission, isLeader } = useAuth();
   const [song, setSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -75,7 +75,7 @@ export default function SongDetail() {
     return <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>;
   }
 
-  const canEdit = hasPermission('edit_songs');
+  const canEdit = isLeader;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>

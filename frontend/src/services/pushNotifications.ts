@@ -1,5 +1,6 @@
 // frontend/src/services/pushNotifications.ts
 // Web Push API para PWA (Android + iOS 16.4+)
+import { getToken } from '@/src/api/client';
 
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY || '';
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
@@ -41,8 +42,7 @@ export async function registerPushSubscription(): Promise<boolean> {
     }
 
     // Enviar subscrição ao backend
-    const token = localStorage.getItem('auth_token') ||
-      document.cookie.match(/token=([^;]+)/)?.[1] || '';
+    const token = await getToken() || '';
 
     await fetch(`${API_URL}/api/push/subscribe`, {
       method: 'POST',

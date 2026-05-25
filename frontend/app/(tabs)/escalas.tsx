@@ -23,7 +23,7 @@ type Scale = {
 
 export default function ScalesScreen() {
   const router = useRouter();
-  const { hasPermission } = useAuth();
+  const { hasPermission, isLeader } = useAuth();
   const [items, setItems] = useState<Scale[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,7 +40,7 @@ export default function ScalesScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const canEdit = hasPermission('edit_scales');
+  const canEdit = isLeader;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
