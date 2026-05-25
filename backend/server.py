@@ -1029,6 +1029,11 @@ async def ext_scale_detail(scale_id: str, m: dict = Depends(get_ministry_by_api_
 
 # ---- PUSH SUBSCRIPTIONS ----
 
+@api_router.get("/push/vapid-public-key")
+async def get_vapid_public_key():
+    """Retorna a chave pública VAPID para registro do Web Push."""
+    return {"public_key": VAPID_PUBLIC_KEY}
+
 @api_router.post("/push/subscribe")
 async def push_subscribe(req: PushSubscriptionReq, user: dict = Depends(get_current_user)):
     """Guarda a subscrição push do utilizador."""

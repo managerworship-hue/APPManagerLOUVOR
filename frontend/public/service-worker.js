@@ -1,7 +1,7 @@
 // frontend/public/service-worker.js
 // Service Worker com suporte a Web Push + cache offline
 
-const CACHE_NAME = 'louvorapp-v2';
+const CACHE_NAME = 'worshipmanager-v2';
 const STATIC_ASSETS = ['/', '/index.html', '/manifest.json'];
 
 // Cache na instalação
@@ -52,7 +52,7 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data.json();
   } catch {
-    data = { title: 'LouvorApp', body: event.data.text() };
+    data = { title: 'Worship Manager', body: event.data.text() };
   }
 
   const options = {
@@ -65,7 +65,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'LouvorApp', options)
+    self.registration.showNotification(data.title || 'Worship Manager', options)
   );
 });
 

@@ -40,12 +40,18 @@ export default function RootLayout() {
       link.href = '/manifest.json';
 
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+        const registerSW = () => {
           navigator.serviceWorker
             .register('/service-worker.js')
             .then(reg => console.log('✅ SW registrado:', reg.scope))
             .catch(err => console.error('❌ SW falhou:', err));
-        });
+        };
+
+        if (document.readyState === 'complete') {
+          registerSW();
+        } else {
+          window.addEventListener('load', registerSW);
+        }
       }
     }
   }, []);

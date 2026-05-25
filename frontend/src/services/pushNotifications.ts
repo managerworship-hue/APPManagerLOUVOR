@@ -1,6 +1,7 @@
 // frontend/src/services/pushNotifications.ts
 // Web Push API para PWA (Android + iOS 16.4+)
 import { getToken } from '@/src/api/client';
+import { storage } from '@/src/utils/storage';
 
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY || '';
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
@@ -27,18 +28,45 @@ export async function registerPushSubscription(): Promise<boolean> {
 
     const registration = await navigator.serviceWorker.ready;
 
-    // Verificar se já tem subscrição
+    // 1. Obter VAPID key
+    let vapidKey = VAPID_PUBLIC_KEY;
+    if (!vapidKey) {
+      try {
+        const res = await fetch(`${API_URL}/api/push/vapid-public-key`);
+        if (res.ok) {
+          const data = await res.json();
+          vapidKey = data.public_key;
+        }
+      } catch (e) {
+        console.error('Erro ao obter VAPID Key do backend:', e);
+      }
+    }
+
+    if (!vapidKey) {
+      console.error('VAPID_PUBLIC_KEY não configurada no frontend e não retornada pelo backend');
+      return false;
+    }
+
+    // 2. Verificar se já tem subscrição
     let subscription = await registration.pushManager.getSubscription();
 
+    // 3. Forçar recriação se a VAPID key gravada for diferente da atual
+    const SAVED_VAPID_KEY_KEY = 'saved_vapid_key';
+    const savedVapidKey = await storage.getItem<string>(SAVED_VAPID_KEY_KEY, '');
+
+    if (subscription && savedVapidKey !== vapidKey) {
+      console.log('🔄 VAPID key mudou ou é nova. A recriar subscrição...');
+      await subscription.unsubscribe();
+      subscription = null;
+    }
+
     if (!subscription) {
-      if (!VAPID_PUBLIC_KEY) {
-        console.error('VAPID_PUBLIC_KEY não configurada');
-        return false;
-      }
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as any,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey) as any,
       });
+      // Guardar a nova VAPID key localmente
+      await storage.setItem(SAVED_VAPID_KEY_KEY, vapidKey);
     }
 
     // Enviar subscrição ao backend
