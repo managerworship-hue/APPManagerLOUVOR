@@ -41,6 +41,11 @@ const AuthContext = createContext<Ctx | undefined>(undefined);
 async function tryRegisterPush() {
   if (Platform.OS !== 'web') return;
   try {
+    const disabled = await storage.getItem('push_notifications_disabled', false);
+    if (disabled) {
+      console.log('Notificações push desativadas por opção do utilizador');
+      return;
+    }
     const { registerPushSubscription } = await import('@/src/services/pushNotifications');
     await registerPushSubscription();
   } catch (e) {

@@ -40,10 +40,12 @@ export default function ProfileScreen() {
   // Estados e Efeitos do Sininho / Permissão de Notificações
   const [pushStatus, setPushStatus] = useState<string>('loading');
   const [isStandalone, setIsStandalone] = useState<boolean>(true);
+  const [pushEnabled, setPushEnabled] = useState<boolean>(false);
 
   const checkPushPermission = useCallback(async () => {
     if (Platform.OS !== 'web') {
       setPushStatus('unsupported');
+      setPushEnabled(false);
       return;
     }
     const standalone = (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches;
@@ -51,34 +53,63 @@ export default function ProfileScreen() {
 
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       setPushStatus('unsupported');
+      setPushEnabled(false);
       return;
     }
     const permission = (Notification as any).permission;
     setPushStatus(permission);
+
+    // Verificar se o usuário explicitamente desativou o push nas configurações do app
+    const disabled = await storage.getItem('push_notifications_disabled', false);
+    setPushEnabled(permission === 'granted' && !disabled);
   }, []);
 
   useEffect(() => {
     checkPushPermission();
   }, [checkPushPermission]);
 
-  const handleActivatePush = async () => {
+  const handleTogglePush = async () => {
     if (Platform.OS !== 'web') return;
-    try {
-      const { registerPushSubscription } = await import('@/src/services/pushNotifications');
-      const success = await registerPushSubscription();
-      await checkPushPermission();
-      if (success) {
-        window.alert('Notificações push ativadas com sucesso!');
-      } else {
-        const permission = (Notification as any).permission;
-        if (permission === 'denied') {
-          window.alert('Permissão negada. Por favor, ative as notificações nas configurações do seu navegador para este site.');
-        } else {
-          window.alert('Falha ao ativar notificações push.');
+
+    if (pushEnabled) {
+      // Desativar Push
+      try {
+        await storage.setItem('push_notifications_disabled', true);
+        const { unregisterPushSubscription } = await import('@/src/services/pushNotifications');
+        await unregisterPushSubscription();
+
+        // Limpar inscrição no backend
+        try {
+          await api('/push/unsubscribe', { method: 'DELETE' });
+        } catch (backendErr) {
+          console.log('Erro ao remover subscrição do backend:', backendErr);
         }
+
+        await checkPushPermission();
+        window.alert('Notificações push desativadas.');
+      } catch (e: any) {
+        window.alert('Erro ao desativar push: ' + e.message);
       }
-    } catch (e: any) {
-      window.alert('Erro ao ativar push: ' + e.message);
+    } else {
+      // Ativar Push
+      try {
+        await storage.setItem('push_notifications_disabled', false);
+        const { registerPushSubscription } = await import('@/src/services/pushNotifications');
+        const success = await registerPushSubscription();
+        await checkPushPermission();
+        if (success) {
+          window.alert('Notificações push ativadas com sucesso!');
+        } else {
+          const permission = (Notification as any).permission;
+          if (permission === 'denied') {
+            window.alert('Permissão negada. Por favor, ative as notificações nas configurações do seu navegador para este site.');
+          } else {
+            window.alert('Falha ao ativar notificações push.');
+          }
+        }
+      } catch (e: any) {
+        window.alert('Erro ao ativar push: ' + e.message);
+      }
     }
   };
 
@@ -498,28 +529,28 @@ export default function ProfileScreen() {
             {Platform.OS === 'web' && (
               <>
                 <View style={styles.actionDivider} />
-                <TouchableOpacity style={styles.action} onPress={handleActivatePush} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.action} onPress={handleTogglePush} activeOpacity={0.7}>
                   <View style={[
                     styles.actionIcon, 
-                    { backgroundColor: pushStatus === 'granted' ? '#E6F0EA' : (pushStatus === 'denied' ? '#FDE8E8' : '#FFF3CD') }
+                    { backgroundColor: pushEnabled ? '#E6F0EA' : (pushStatus === 'denied' ? '#FDE8E8' : '#FFF3CD') }
                   ]}>
                     <Ionicons 
-                      name={pushStatus === 'granted' ? 'notifications' : 'notifications-outline'} 
+                      name={pushEnabled ? 'notifications' : 'notifications-outline'} 
                       size={18} 
-                      color={pushStatus === 'granted' ? colors.success : (pushStatus === 'denied' ? colors.error : colors.gold)} 
+                      color={pushEnabled ? colors.success : (pushStatus === 'denied' ? colors.error : colors.gold)} 
                     />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.actionTitle}>Notificações Push</Text>
                     <Text style={[
                       styles.actionSubtitle, 
-                      pushStatus === 'granted' && { color: colors.success },
+                      pushEnabled && { color: colors.success },
                       pushStatus === 'denied' && { color: colors.error }
                     ]}>
-                      {pushStatus === 'granted' ? 'Ativadas' : (pushStatus === 'denied' ? 'Bloqueadas no Navegador' : 'Desativadas (Tocar para Ativar)')}
+                      {pushEnabled ? 'Ativadas' : (pushStatus === 'denied' ? 'Bloqueadas no Navegador' : 'Desativadas')}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  <Ionicons name={pushEnabled ? 'toggle' : 'toggle-outline'} size={28} color={pushEnabled ? colors.success : colors.textMuted} />
                 </TouchableOpacity>
               </>
             )}
