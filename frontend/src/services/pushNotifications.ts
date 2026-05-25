@@ -63,10 +63,13 @@ export async function registerPushSubscription(): Promise<boolean> {
 
 export async function unregisterPushSubscription(): Promise<void> {
   try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    if (subscription) {
-      await subscription.unsubscribe();
+    if (!('serviceWorker' in navigator)) return;
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (registration) {
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+      }
     }
   } catch (error) {
     console.error('Erro ao cancelar push:', error);

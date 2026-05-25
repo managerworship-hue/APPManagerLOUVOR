@@ -96,7 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (Platform.OS === 'web') {
       try {
         const { unregisterPushSubscription } = await import('@/src/services/pushNotifications');
-        await unregisterPushSubscription();
+        // Correção: corre em segundo plano para não bloquear a saída da conta se o SW travar/demorar
+        unregisterPushSubscription().catch(() => {});
       } catch {}
     }
     await clearToken();
