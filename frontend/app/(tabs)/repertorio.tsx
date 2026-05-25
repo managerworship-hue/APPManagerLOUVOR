@@ -177,8 +177,9 @@ export default function RepertorioScreen() {
   const canEdit = isLeader;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
+    <>
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.header}>
         <View>
           <Text style={styles.title}>Repertório</Text>
           <Text style={styles.subtitle}>{items.length} música{items.length !== 1 ? 's' : ''}</Text>
@@ -442,7 +443,7 @@ export default function RepertorioScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </SafeAreaView>
+    </>
   );
 }
 
