@@ -33,6 +33,16 @@ const ENDPOINTS = [
   },
 ];
 
+const JESUSMEAJUDA_STEPS = [
+  'Abre a app JesusMeAjuda no browser.',
+  'No painel esquerdo, clica em "LouvorApp" no fundo.',
+  'Clica em "Configurar ligação".',
+  'Cola o URL do servidor (Base URL abaixo) e a tua API Key.',
+  'Clica em "Ligar" — as escalas aparecem automaticamente.',
+  'Clica em "Carregar" numa escala para usar o setlist no metrónomo.',
+];
+
+
 export default function ApiDocs() {
   const router = useRouter();
   const { ministry, isLeader, refresh } = useAuth();
@@ -146,6 +156,46 @@ export default function ApiDocs() {
           <Ionicons name="copy-outline" size={14} color={colors.textSecondary} />
         </TouchableOpacity>
 
+        {/* ── JesusMeAjuda integration card ── */}
+        <Text style={styles.sectionLabel}>INTEGRAÇÃO COM JESUSMEAJUDA</Text>
+        <View style={styles.jmaCard}>
+          <View style={styles.jmaHeader}>
+            <View style={styles.jmaIconWrap}>
+              <Ionicons name="musical-notes" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.jmaTitle}>Setlist Metrónomo</Text>
+              <Text style={styles.jmaSubtitle}>Carrega escalas diretamente na app de metrónomo</Text>
+            </View>
+          </View>
+
+          <View style={styles.jmaSteps}>
+            {JESUSMEAJUDA_STEPS.map((step, i) => (
+              <View key={i} style={styles.jmaStep}>
+                <View style={styles.jmaStepNum}>
+                  <Text style={styles.jmaStepNumText}>{i + 1}</Text>
+                </View>
+                <Text style={styles.jmaStepText}>{step}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.jmaCopyRow}>
+            <TouchableOpacity style={styles.jmaCopyBtn} onPress={() => copy(API_BASE)}>
+              <Ionicons name="link-outline" size={14} color={colors.primary} />
+              <Text style={styles.jmaCopyBtnText}>Copiar URL</Text>
+            </TouchableOpacity>
+            {isLeader && key ? (
+              <TouchableOpacity style={styles.jmaCopyBtn} onPress={() => copy(key, true)}>
+                <Ionicons name={copiedKey ? 'checkmark' : 'key-outline'} size={14} color={copiedKey ? colors.success : colors.primary} />
+                <Text style={[styles.jmaCopyBtnText, copiedKey && { color: colors.success }]}>
+                  {copiedKey ? 'API Key copiada!' : 'Copiar API Key'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </View>
+
         <Text style={styles.sectionLabel}>ENDPOINTS DISPONÍVEIS</Text>
         {ENDPOINTS.map((e) => (
           <View key={e.path} style={styles.endpoint}>
@@ -176,6 +226,7 @@ export default function ApiDocs() {
   );
 }
 
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
@@ -204,6 +255,20 @@ const styles = StyleSheet.create({
   endpointDesc: { fontSize: font.caption, color: colors.textSecondary, lineHeight: 18 },
   codeBlock: { backgroundColor: '#0F141E', borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
   codeBlockText: { fontFamily: Platform_select(), fontSize: 12, color: '#E8E8E6', lineHeight: 20 },
+  // JesusMeAjuda card
+  jmaCard: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: spacing.md, marginBottom: spacing.md },
+  jmaHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
+  jmaIconWrap: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#E6E9F0', alignItems: 'center', justifyContent: 'center' },
+  jmaTitle: { fontSize: font.body, fontWeight: '700', color: colors.text },
+  jmaSubtitle: { fontSize: font.caption, color: colors.textSecondary, marginTop: 2 },
+  jmaSteps: { gap: 8, marginBottom: spacing.md },
+  jmaStep: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  jmaStepNum: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 1, flexShrink: 0 },
+  jmaStepNumText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  jmaStepText: { flex: 1, fontSize: font.caption, color: colors.textSecondary, lineHeight: 20 },
+  jmaCopyRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm, marginTop: spacing.xs },
+  jmaCopyBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.sm, backgroundColor: '#E6E9F0', borderWidth: 1, borderColor: colors.border },
+  jmaCopyBtnText: { fontSize: font.caption, color: colors.primary, fontWeight: '700' },
 });
 
 function Platform_select(): string {
