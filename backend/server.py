@@ -10,6 +10,12 @@ import string
 import uuid
 import json
 import asyncio
+import io
+import re
+import docx
+from pypdf import PdfReader
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
 from pathlib import Path
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Literal, Any
@@ -161,6 +167,9 @@ class PushSubscriptionReq(BaseModel):
     endpoint: str
     keys: dict
     expirationTime: Optional[Any] = None
+
+class GoogleDriveImportReq(BaseModel):
+    access_token: str
 
 
 # ============ HELPERS ============
@@ -485,6 +494,151 @@ async def delete_song(song_id: str, user: dict = Depends(require_leader)):
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Música não encontrada")
     return {"ok": True}
+
+
+@api_router.post("/songs/import/google-drive")
+async def import_from_google_drive(req: GoogleDriveImportReq, user: dict = Depends(require_leader)):
+    logger = logging.getLogger("google_drive_import")
+    try:
+        # Create Google API client using the access_token
+        creds = Credentials(token=req.access_token)
+        service = build("drive", "v3", credentials=creds)
+        
+        # 1. Encontrar a pasta "Louvor" no Google Drive
+        query = "name = 'Louvor' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+        response = service.files().list(q=query, spaces="drive", fields="files(id, name)").execute()
+        files = response.get("files", [])
+        if not files:
+            raise HTTPException(
+                status_code=404, 
+                detail="Pasta 'Louvor' não encontrada no seu Google Drive. Por favor, crie uma pasta chamada 'Louvor' no seu Drive."
+            )
+        
+        louvor_folder_id = files[0]["id"]
+        
+        # 2. Listar todas as subpastas dentro de "Louvor"
+        query = f"'{louvor_folder_id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+        response = service.files().list(q=query, spaces="drive", fields="files(id, name)", pageSize=1000).execute()
+        song_folders = response.get("files", [])
+        
+        imported_count = 0
+        errors = []
+        
+        for folder in song_folders:
+            folder_id = folder["id"]
+            folder_name = folder["name"]
+            
+            # Procurar arquivos .docx ou .pdf dentro da subpasta
+            query = f"'{folder_id}' in parents and (mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' or mimeType = 'application/pdf') and trashed = false"
+            response = service.files().list(q=query, spaces="drive", fields="files(id, name, mimeType)").execute()
+            files_in_folder = response.get("files", [])
+            
+            if not files_in_folder:
+                continue
+                
+            # Pegar o primeiro arquivo .docx ou .pdf encontrado
+            file_to_parse = files_in_folder[0]
+            file_id = file_to_parse["id"]
+            mime_type = file_to_parse["mimeType"]
+            
+            try:
+                # Baixar o arquivo em memória
+                file_content = service.files().get_media(fileId=file_id).execute()
+                
+                # Extrair texto com base no tipo de arquivo
+                text = ""
+                if mime_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                    # Parse DOCX
+                    doc = docx.Document(io.BytesIO(file_content))
+                    text = "\n".join([p.text for p in doc.paragraphs])
+                elif mime_type == 'application/pdf':
+                    # Parse PDF
+                    reader = PdfReader(io.BytesIO(file_content))
+                    pages_text = []
+                    for page in reader.pages:
+                        t = page.extract_text()
+                        if t:
+                            pages_text.append(t)
+                    text = "\n".join(pages_text)
+                    
+                if not text.strip():
+                    continue
+                    
+                # Analisar a primeira linha para extrair título, tom, bpm
+                lines = [l.strip() for l in text.split("\n") if l.strip()]
+                if not lines:
+                    continue
+                    
+                first_line = lines[0]
+                
+                # Regex: [NOME DA MUSICA - "TOM" - BPM] ou NOME DA MUSICA - TOM - BPM
+                match = re.match(
+                    r"(?:\[)?\s*([^-\[\]]+?)\s*-\s*(?:\"|')?([A-G][#b]?(?:m)?)(?:\"|')?\s*-\s*(\d{2,3})\s*(?:\])?", 
+                    first_line
+                )
+                
+                if match:
+                    title = match.group(1).strip()
+                    key = match.group(2).strip()
+                    bpm = int(match.group(3).strip())
+                    # Letra e cifra é o resto do arquivo (excluindo a primeira linha de metadados)
+                    lyrics = "\n".join(lines[1:])
+                else:
+                    # Fallback: nome da pasta como título, texto inteiro como letra
+                    title = folder_name.strip()
+                    key = ""
+                    bpm = None
+                    lyrics = text
+                    
+                # Verificar se já existe uma música com este título no ministério
+                existing = await db.songs.find_one({
+                    "ministry_id": user["ministry_id"], 
+                    "title": {"$regex": f"^{re.escape(title)}$", "$options": "i"}
+                })
+                
+                if existing:
+                    # Se a música já existir, mas estiver sem letra ou tom, atualiza-a
+                    if not existing.get("lyrics") or not existing.get("key"):
+                        await db.songs.update_one(
+                            {"_id": existing["_id"]},
+                            {"$set": {
+                                "key": key or existing.get("key", ""),
+                                "bpm": bpm or existing.get("bpm"),
+                                "lyrics": lyrics or existing.get("lyrics", "")
+                            }}
+                        )
+                    continue
+                    
+                # Cadastrar nova música
+                new_song = {
+                    "_id": str(uuid.uuid4()),
+                    "ministry_id": user["ministry_id"],
+                    "title": title,
+                    "artist": "",
+                    "key": key,
+                    "bpm": bpm,
+                    "youtube_url": "",
+                    "cifra_url": "",
+                    "lyrics": lyrics,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                }
+                await db.songs.insert_one(new_song)
+                imported_count += 1
+                
+            except Exception as e:
+                logger.error(f"Erro ao processar arquivo do Google Drive para {folder_name}: {str(e)}")
+                errors.append(f"Erro em '{folder_name}': {str(e)}")
+                continue
+                
+        return {
+            "ok": True, 
+            "imported_count": imported_count, 
+            "errors": errors
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro geral durante importação do Google Drive: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro ao conectar com Google Drive: {str(e)}")
 
 
 # ---- SCALES ----
