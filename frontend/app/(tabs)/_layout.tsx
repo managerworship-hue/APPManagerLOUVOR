@@ -25,9 +25,14 @@ export default function TabsLayout() {
     );
   }
 
+  const isAndroid = Platform.OS === 'android';
   const isMobileWeb = Platform.OS === 'web' && typeof window !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent);
-  const bottomPadding = insets.bottom > 0 ? insets.bottom : (isMobileWeb ? 20 : 8);
-  const tabBarHeight = 62 + (insets.bottom > 0 ? insets.bottom : (isMobileWeb ? 12 : 0));
+  const bottomPadding = isAndroid 
+    ? Math.max(insets.bottom, 24) 
+    : (insets.bottom > 0 ? insets.bottom : (isMobileWeb ? 24 : 8));
+  const tabBarHeight = 62 + (isAndroid 
+    ? Math.max(insets.bottom, 16) 
+    : (insets.bottom > 0 ? insets.bottom : (isMobileWeb ? 16 : 0)));
 
   return (
     <Tabs
