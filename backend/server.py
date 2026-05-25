@@ -362,12 +362,12 @@ async def signup(req: SignupReq):
         if leader_ids:
             for l_id in leader_ids:
                 await create_notification(l_id, "Novo membro no ministério 👥", f"{req.name.strip()} entrou no ministério.", "member_joined", "/membros")
-            asyncio.create_task(send_push_to_users(
+            await send_push_to_users(
                 leader_ids,
                 title="Novo membro",
                 body=f"{req.name.strip()} entrou no ministério.",
                 url="/membros",
-            ))
+            )
     else:
         await create_notification(user["_id"], "Boas-vindas! 🌟", f"Seu ministério '{ministry['name']}' foi criado com sucesso!", "welcome")
 
@@ -459,12 +459,12 @@ async def update_member(member_id: str, req: UpdateMemberReq, leader: dict = Dep
 
     # Notificação de promoção a líder
     if updates.get("role") == ROLE_LEADER:
-        asyncio.create_task(send_push_to_users(
+        await send_push_to_users(
             [member_id],
             title="Parabéns! 🌟",
             body="Você foi promovido a líder do ministério.",
             url="/",
-        ))
+        )
 
     return serialize_user(target)
 
@@ -891,12 +891,12 @@ async def create_scale(req: ScaleReq, user: dict = Depends(require_leader)):
     members = await db.users.find({"ministry_id": user["ministry_id"], "_id": {"$ne": user["_id"]}}).to_list(None)
     member_ids = [m["_id"] for m in members]
     if member_ids:
-        asyncio.create_task(send_push_to_users(
+        await send_push_to_users(
             member_ids,
             title="Nova escala criada 📅",
             body=f"{req.title.strip()} — {req.date}",
             url="/escalas",
-        ))
+        )
 
     return serialize_scale(scale)
 
@@ -925,12 +925,12 @@ async def update_scale(scale_id: str, req: ScaleReq, user: dict = Depends(requir
                 "scale_updated",
                 f"/escala/{scale_id}"
             )
-        asyncio.create_task(send_push_to_users(
+        await send_push_to_users(
             notif_ids,
             title="Escala atualizada ✏️",
             body=f"A escala '{req.title.strip()}' foi alterada.",
             url=f"/escala/{scale_id}",
-        ))
+        )
 
     # Notificar músicos removidos da escala
     if removed_ids:
@@ -942,12 +942,12 @@ async def update_scale(scale_id: str, req: ScaleReq, user: dict = Depends(requir
                 "scale_removed",
                 "/escalas"
             )
-        asyncio.create_task(send_push_to_users(
+        await send_push_to_users(
             removed_ids,
             title="Removido da escala",
             body=f"Você foi removido da escala '{req.title.strip()}'.",
             url="/escalas",
-        ))
+        )
 
     return serialize_scale(s)
 
@@ -1002,12 +1002,12 @@ async def create_announcement(req: AnnouncementReq, user: dict = Depends(require
                 "announcement",
                 f"/aviso/{ann['_id']}"
             )
-        asyncio.create_task(send_push_to_users(
+        await send_push_to_users(
             member_ids,
             title=f"📢 {req.title.strip()}",
             body=req.body.strip()[:80] + ("..." if len(req.body) > 80 else ""),
             url="/",
-        ))
+        )
 
     return serialize_announcement(ann)
 
