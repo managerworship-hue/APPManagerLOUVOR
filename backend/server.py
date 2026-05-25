@@ -168,6 +168,16 @@ class PushSubscriptionReq(BaseModel):
     keys: dict
     expirationTime: Optional[Any] = None
 
+class NotificationOut(BaseModel):
+    id: str
+    user_id: str
+    title: str
+    body: str
+    type: str
+    read: bool
+    created_at: str
+    url: Optional[str] = ""
+
 class GoogleDriveImportReq(BaseModel):
     access_token: str
 
@@ -221,6 +231,31 @@ def serialize_ministry(m: dict, include_api_key: bool = True) -> MinistryOut:
         invite_code=m["invite_code"],
         api_key=m.get("api_key") if include_api_key else None,
     )
+
+def serialize_notification(n: dict) -> dict:
+    return {
+        "id": n["_id"],
+        "user_id": n["user_id"],
+        "title": n["title"],
+        "body": n["body"],
+        "type": n["type"],
+        "read": n.get("read", False),
+        "created_at": n["created_at"],
+        "url": n.get("url", ""),
+    }
+
+async def create_notification(user_id: str, title: str, body: str, notif_type: str, url: str = ""):
+    n = {
+        "_id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "title": title,
+        "body": body,
+        "type": notif_type,
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "url": url,
+    }
+    await db.notifications.insert_one(n)
 
 async def get_current_user(
     creds: HTTPAuthorizationCredentials = Depends(bearer_scheme),
@@ -319,17 +354,22 @@ async def signup(req: SignupReq):
     }
     await db.users.insert_one(user)
 
-    # Notificar líderes quando novo membro entra (apenas se não for o primeiro — criador do ministério)
+    # Notificar líderes e enviar boas-vindas
     if role == ROLE_MEMBER:
+        await create_notification(user["_id"], "Bem-vindo! 👋", f"Bem-vindo ao ministério {ministry['name']}!", "welcome")
         leaders = await db.users.find({"ministry_id": ministry["_id"], "role": ROLE_LEADER}).to_list(None)
         leader_ids = [l["_id"] for l in leaders]
         if leader_ids:
+            for l_id in leader_ids:
+                await create_notification(l_id, "Novo membro no ministério 👥", f"{req.name.strip()} entrou no ministério.", "member_joined", "/membros")
             asyncio.create_task(send_push_to_users(
                 leader_ids,
                 title="Novo membro",
                 body=f"{req.name.strip()} entrou no ministério.",
                 url="/membros",
             ))
+    else:
+        await create_notification(user["_id"], "Boas-vindas! 🌟", f"Seu ministério '{ministry['name']}' foi criado com sucesso!", "welcome")
 
     return AuthResponse(
         token=make_token(user["_id"], ministry["_id"]),
@@ -823,7 +863,31 @@ async def create_scale(req: ScaleReq, user: dict = Depends(require_leader)):
     }
     await db.scales.insert_one(scale)
 
-    # Notificar todos os membros do ministério
+    # Notificar membros sobre a nova escala
+    musician_set = set(req.musician_ids)
+    all_members = await db.users.find({"ministry_id": user["ministry_id"]}).to_list(None)
+    
+    for m in all_members:
+        m_id = m["_id"]
+        if m_id == user["_id"]:
+            continue
+        if m_id in musician_set:
+            await create_notification(
+                m_id, 
+                "Você foi escalado! 📅", 
+                f"Você foi adicionado à escala '{req.title.strip()}' no dia {req.date}.", 
+                "scale_added", 
+                f"/escala/{scale['_id']}"
+            )
+        else:
+            await create_notification(
+                m_id, 
+                "Nova escala criada 🗓️", 
+                f"Uma nova escala '{req.title.strip()}' foi criada no dia {req.date}.", 
+                "scale_created", 
+                "/escalas"
+            )
+
     members = await db.users.find({"ministry_id": user["ministry_id"], "_id": {"$ne": user["_id"]}}).to_list(None)
     member_ids = [m["_id"] for m in members]
     if member_ids:
@@ -853,6 +917,14 @@ async def update_scale(scale_id: str, req: ScaleReq, user: dict = Depends(requir
     # Notificar músicos que continuam na escala sobre a alteração
     notif_ids = list(new_musician_ids - {user["_id"]})
     if notif_ids:
+        for n_id in notif_ids:
+            await create_notification(
+                n_id,
+                "Escala atualizada ✏️",
+                f"A escala '{req.title.strip()}' foi alterada.",
+                "scale_updated",
+                f"/escala/{scale_id}"
+            )
         asyncio.create_task(send_push_to_users(
             notif_ids,
             title="Escala atualizada ✏️",
@@ -862,6 +934,14 @@ async def update_scale(scale_id: str, req: ScaleReq, user: dict = Depends(requir
 
     # Notificar músicos removidos da escala
     if removed_ids:
+        for r_id in removed_ids:
+            await create_notification(
+                r_id,
+                "Removido da escala ❌",
+                f"Você foi removido da escala '{req.title.strip()}'.",
+                "scale_removed",
+                "/escalas"
+            )
         asyncio.create_task(send_push_to_users(
             removed_ids,
             title="Removido da escala",
@@ -914,6 +994,14 @@ async def create_announcement(req: AnnouncementReq, user: dict = Depends(require
     members = await db.users.find({"ministry_id": user["ministry_id"], "_id": {"$ne": user["_id"]}}).to_list(None)
     member_ids = [m["_id"] for m in members]
     if member_ids:
+        for m_id in member_ids:
+            await create_notification(
+                m_id,
+                f"📢 Novo aviso: {req.title.strip()}",
+                f"{user['name']} publicou um novo aviso.",
+                "announcement",
+                f"/aviso/{ann['_id']}"
+            )
         asyncio.create_task(send_push_to_users(
             member_ids,
             title=f"📢 {req.title.strip()}",
@@ -1036,6 +1124,25 @@ async def ext_scale_detail(scale_id: str, m: dict = Depends(get_ministry_by_api_
                 "lyrics": song.get("lyrics", ""),
             })
     return {**serialize_scale(s), "setlist": setlist}
+
+
+# ---- NOTIFICATIONS ----
+
+@api_router.get("/notifications", response_model=List[NotificationOut])
+async def list_notifications(user: dict = Depends(get_current_user)):
+    cursor = db.notifications.find({"user_id": user["_id"]}).sort("created_at", -1)
+    items = await cursor.to_list(100)
+    return [serialize_notification(n) for n in items]
+
+@api_router.post("/notifications/read-all")
+async def read_all_notifications(user: dict = Depends(get_current_user)):
+    await db.notifications.update_many({"user_id": user["_id"], "read": False}, {"$set": {"read": True}})
+    return {"ok": True}
+
+@api_router.post("/notifications/mark-read/{notif_id}")
+async def mark_notification_read(notif_id: str, user: dict = Depends(get_current_user)):
+    await db.notifications.update_one({"_id": notif_id, "user_id": user["_id"]}, {"$set": {"read": True}})
+    return {"ok": True}
 
 
 # ---- PUSH SUBSCRIPTIONS ----
