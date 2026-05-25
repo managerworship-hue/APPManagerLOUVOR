@@ -3,12 +3,14 @@ import { Tabs, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, View, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/context/AuthContext';
 import { colors } from '@/src/theme';
 
 export default function TabsLayout() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
@@ -22,6 +24,9 @@ export default function TabsLayout() {
     );
   }
 
+  // Padding inferior = safe area (home indicator) + espaço para o label
+  const tabBarHeight = 50 + insets.bottom;
+
   return (
     <Tabs
       screenOptions={{
@@ -33,8 +38,9 @@ export default function TabsLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          // Deixar o sistema gerir a altura — não forçar valores fixos
-          // que colidem com a safe area do iOS
+          height: tabBarHeight,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
           fontSize: 11,
