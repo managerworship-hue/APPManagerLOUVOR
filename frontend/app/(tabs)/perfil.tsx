@@ -297,6 +297,43 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleDeleteMinistry = async () => {
+    const doDelete = async () => {
+      try {
+        await api('/ministry', { method: 'DELETE' });
+        if (Platform.OS === 'web') {
+          window.alert('Ministério excluído com sucesso!');
+        } else {
+          Alert.alert('Sucesso', 'Ministério excluído com sucesso!');
+        }
+        await logout();
+        router.replace('/login');
+      } catch (e: any) {
+        if (Platform.OS === 'web') {
+          window.alert('Erro ao excluir: ' + (e.message || ''));
+        } else {
+          Alert.alert('Erro', e.message || 'Falha ao excluir ministério');
+        }
+      }
+    };
+
+    const msg = 'Tem certeza de que deseja excluir permanentemente o seu ministério? Esta ação é irreversível e apagará todas as escalas, músicas, avisos e membros cadastrados.';
+    if (Platform.OS === 'web') {
+      if (window.confirm(msg)) {
+        await doDelete();
+      }
+    } else {
+      Alert.alert(
+        'Excluir Ministério',
+        msg,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Excluir', style: 'destructive', onPress: doDelete },
+        ]
+      );
+    }
+  };
+
   const toggleInstrument = (inst: string) =>
     setSelectedInstruments(prev =>
       prev.includes(inst) ? prev.filter(i => i !== inst) : [...prev, inst]
@@ -427,6 +464,21 @@ export default function ProfileScreen() {
                 <Text style={styles.cardSubtitle}>Código: {ministry?.invite_code}</Text>
               </View>
             </View>
+            {isLeader && (
+              <>
+                <View style={styles.actionDivider} />
+                <TouchableOpacity style={styles.action} onPress={handleDeleteMinistry} activeOpacity={0.7}>
+                  <View style={[styles.actionIcon, { backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.15)' : '#FDE8E8' }]}>
+                    <Ionicons name="trash-outline" size={18} color={colors.error} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.actionTitle, { color: colors.error }]}>Excluir Ministério</Text>
+                    <Text style={styles.actionSubtitle}>Apagar permanentemente o ministério e todos os dados</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
 

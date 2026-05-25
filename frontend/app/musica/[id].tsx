@@ -115,7 +115,7 @@ export default function SongDetail() {
           {song.artist ? <Text style={styles.artist}>{song.artist}</Text> : null}
           <View style={styles.badges}>
             {song.key ? <View style={styles.badge}><Text style={styles.badgeText}>Tom: {song.key}</Text></View> : null}
-            {song.bpm ? <View style={[styles.badge, { backgroundColor: '#F2EBDB' }]}><Text style={[styles.badgeText, { color: colors.gold }]}>{song.bpm} BPM</Text></View> : null}
+            {song.bpm ? <View style={styles.badge}><Text style={styles.badgeText}>{song.bpm} BPM</Text></View> : null}
           </View>
         </View>
 

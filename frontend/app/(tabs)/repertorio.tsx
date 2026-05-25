@@ -32,8 +32,6 @@ export default function RepertorioScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState('');
 
-
-
   const load = useCallback(async () => {
     try {
       const r = await api<Song[]>('/songs');
@@ -59,7 +57,7 @@ export default function RepertorioScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
+      <View style={styles.header}>
         <View>
           <Text style={styles.title}>Repertório</Text>
           <Text style={styles.subtitle}>{items.length} música{items.length !== 1 ? 's' : ''}</Text>
@@ -137,8 +135,8 @@ export default function RepertorioScreen() {
                     </View>
                   ) : null}
                   {item.bpm ? (
-                    <View style={[styles.badge, { backgroundColor: '#F2EBDB' }]}>
-                      <Text style={[styles.badgeText, { color: colors.gold }]}>{item.bpm} BPM</Text>
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{item.bpm} BPM</Text>
                     </View>
                   ) : null}
                 </View>

@@ -379,6 +379,16 @@ async def get_ministry(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Ministério não encontrado")
     return serialize_ministry(m, include_api_key=(user["role"] == ROLE_LEADER))
 
+@api_router.delete("/ministry")
+async def delete_ministry(leader: dict = Depends(require_leader)):
+    mid = leader["ministry_id"]
+    await db.announcements.delete_many({"ministry_id": mid})
+    await db.scales.delete_many({"ministry_id": mid})
+    await db.songs.delete_many({"ministry_id": mid})
+    await db.users.delete_many({"ministry_id": mid})
+    await db.ministries.delete_one({"_id": mid})
+    return {"ok": True, "detail": "Ministério e recursos excluídos com sucesso"}
+
 @api_router.get("/ministry/members", response_model=List[UserOut])
 async def list_members(user: dict = Depends(get_current_user)):
     cursor = db.users.find({"ministry_id": user["ministry_id"]}, {"password_hash": 0})
