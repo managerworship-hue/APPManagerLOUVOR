@@ -24,7 +24,7 @@ type Scale = {
 };
 
 type Song = { id: string; title: string; artist: string; key: string; bpm: number | null };
-type Member = { id: string; name: string; instruments: string[] };
+type Member = { id: string; name: string; instruments: string[]; avatar?: string };
 
 export default function ScaleDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -184,7 +184,11 @@ export default function ScaleDetail() {
             return (
               <View key={m.id} style={styles.musicianRow} testID={`detail-musician-${m.id}`}>
                 <View style={styles.mAvatar}>
-                  <Text style={styles.mAvatarText}>{m.name.charAt(0).toUpperCase()}</Text>
+                  {m.avatar ? (
+                    <Text style={{ fontSize: 20 }}>{m.avatar}</Text>
+                  ) : (
+                    <Text style={styles.mAvatarText}>{m.name.charAt(0).toUpperCase()}</Text>
+                  )}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.mName}>{m.name}</Text>

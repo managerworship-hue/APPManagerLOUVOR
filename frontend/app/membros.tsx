@@ -17,6 +17,7 @@ type Member = {
   role: 'leader' | 'member';
   permissions: string[];
   instruments: string[];
+  avatar?: string;
 };
 
 function confirmAction(message: string, onConfirm: () => void, destructive = false) {
@@ -148,7 +149,11 @@ export default function MembrosScreen() {
                   activeOpacity={isLeader && !isMe ? 0.7 : 1}
                 >
                   <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{m.name.charAt(0).toUpperCase()}</Text>
+                    {m.avatar ? (
+                      <Text style={{ fontSize: 20 }}>{m.avatar}</Text>
+                    ) : (
+                      <Text style={styles.avatarText}>{m.name.charAt(0).toUpperCase()}</Text>
+                    )}
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={styles.nameRow}>

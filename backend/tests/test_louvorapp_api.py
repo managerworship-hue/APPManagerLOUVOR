@@ -72,6 +72,23 @@ class TestAuth:
         assert me.status_code == 200
         assert me.json()["id"] == data["user"]["id"]
 
+    def test_update_avatar_success(self, session, api, leader_account):
+        h = leader_account["headers"]
+        # Verify default avatar
+        r = session.get(f"{api}/auth/me", headers=h)
+        assert r.status_code == 200
+        assert r.json().get("avatar") == ""
+
+        # Update avatar
+        ru = session.put(f"{api}/auth/me", json={"avatar": "🎸"}, headers=h)
+        assert ru.status_code == 200
+        assert ru.json().get("avatar") == "🎸"
+
+        # Verify persistence
+        rg = session.get(f"{api}/auth/me", headers=h)
+        assert rg.status_code == 200
+        assert rg.json().get("avatar") == "🎸"
+
     def test_login_wrong_password(self, session, api, leader_account):
         r = session.post(f"{api}/auth/login", json={
             "email": leader_account["email"], "password": "wrong"
