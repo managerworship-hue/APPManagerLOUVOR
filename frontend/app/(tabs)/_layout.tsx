@@ -25,9 +25,9 @@ export default function TabsLayout() {
     );
   }
 
-  // Padding inferior = safe area (home indicator) + espaço para o label
-  // Base de 62px: ícone (~24px) + label (~14px) + padding top (8) + padding bottom (8) + margem
-  const tabBarHeight = 62 + insets.bottom;
+  const isMobileWeb = Platform.OS === 'web' && typeof window !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent);
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : (isMobileWeb ? 20 : 8);
+  const tabBarHeight = 62 + (insets.bottom > 0 ? insets.bottom : (isMobileWeb ? 12 : 0));
 
   return (
     <Tabs
@@ -41,7 +41,7 @@ export default function TabsLayout() {
           borderTopColor: colors.border,
           borderTopWidth: 1,
           height: tabBarHeight,
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+          paddingBottom: bottomPadding,
           paddingTop: 8,
         },
         tabBarLabelStyle: {

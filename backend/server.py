@@ -64,7 +64,7 @@ async def send_push_to_users(user_ids: List[str], title: str, body: str, url: st
                 vapid_claims=VAPID_CLAIMS,
             )
         except Exception as e:
-            logger.error(f"Erro ao enviar push para {sub.get('user_id')}: {e}")
+            logger.error(f"Erro ao enviar push para {sub.get('user_id')}: {e}", exc_info=True)
             # Remover subscrição inválida
             if "410" in str(e) or "404" in str(e):
                 await db.push_subscriptions.delete_one({"_id": sub["_id"]})
@@ -782,8 +782,19 @@ def serialize_scale(s: dict) -> dict:
         "created_at": s.get("created_at", ""),
     }
 
+async def cleanup_expired_scales():
+    """Remove escalas cuja data seja mais antiga do que 4 dias."""
+    try:
+        limit_date = (datetime.now(timezone.utc) - timedelta(days=4)).date().isoformat()
+        res = await db.scales.delete_many({"date": {"$lt": limit_date}})
+        if res.deleted_count > 0:
+            logger.info(f"🧹 Auto-delete: {res.deleted_count} escalas vencidas há mais de 4 dias foram excluídas.")
+    except Exception as e:
+        logger.error(f"Erro no auto-delete de escalas: {e}", exc_info=True)
+
 @api_router.get("/scales")
 async def list_scales(user: dict = Depends(get_current_user)):
+    await cleanup_expired_scales()
     cursor = db.scales.find({"ministry_id": user["ministry_id"]}).sort("date", 1)
     items = await cursor.to_list(1000)
     return [serialize_scale(s) for s in items]
@@ -1087,6 +1098,7 @@ async def startup():
         await db.users.create_index("email", unique=True)
         await db.ministries.create_index("invite_code", unique=True)
         await db.ministries.create_index("api_key", unique=True)
+        await db.scales.create_index("date")
         logger.info("✅ Conectado ao MongoDB com sucesso")
     except Exception as e:
         logger.error(f"⚠️ MongoDB indisponível no startup: {e}")

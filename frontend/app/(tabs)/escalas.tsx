@@ -1,6 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
-  View, Text, FlatList, StyleSheet, TouchableOpacity,
+  View, Text, SectionList, StyleSheet, TouchableOpacity,
   ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,8 +27,29 @@ export default function ScalesScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const router = useRouter();
-  const { hasPermission, isLeader } = useAuth();
+  const { hasPermission, isLeader, user } = useAuth();
   const [items, setItems] = useState<Scale[]>([]);
+
+  const { minhasEscalas, outrasEscalas } = useMemo(() => {
+    const minhas = items.filter(i => i.musician_ids?.includes(user?.id ?? ''));
+    const outras = items.filter(i => !i.musician_ids?.includes(user?.id ?? ''));
+    return { minhasEscalas: minhas, outrasEscalas: outras };
+  }, [items, user?.id]);
+
+  const sections = useMemo(() => {
+    return [
+      {
+        title: 'Escalas Que Estou',
+        data: minhasEscalas.length === 0 ? [{ id: 'empty-mine', isEmpty: true } as any] : minhasEscalas,
+        isMyScales: true,
+      },
+      {
+        title: 'Outras Escalas',
+        data: outrasEscalas,
+        isMyScales: false,
+      }
+    ];
+  }, [minhasEscalas, outrasEscalas]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -91,51 +112,79 @@ export default function ScalesScreen() {
           )}
         </View>
       ) : (
-        <FlatList
-          data={items}
+        <SectionList
+          sections={sections}
           keyExtractor={(i) => i.id}
           contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+          stickySectionHeadersEnabled={false}
+          renderSectionHeader={({ section }) => {
+            // Se for Outras Escalas e estiver vazia, não renderiza
+            if (!section.isMyScales && section.data.length === 0) return null;
+            
+            return (
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionHeaderDot, { backgroundColor: section.isMyScales ? colors.gold : '#8FA3C8' }]} />
+                <Text style={styles.sectionTitle}>{section.title}</Text>
+                <View style={styles.sectionBadge}>
+                  <Text style={styles.sectionBadgeText}>
+                    {section.isMyScales ? minhasEscalas.length : outrasEscalas.length}
+                  </Text>
+                </View>
+              </View>
+            );
+          }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />
           }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              testID={`scale-item-${item.id}`}
-              style={styles.row}
-              onPress={() => router.push(`/escala/${item.id}`)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.dateBlock}>
-                <Text style={styles.day}>{formatDay(item.date)}</Text>
-                <Text style={styles.month}>{formatMonth(item.date)}</Text>
-              </View>
-              <View style={styles.divider} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle} numberOfLines={1}>{item.title}</Text>
-                <View style={styles.metaRow}>
-                  {item.time ? (
-                    <View style={styles.metaPill}>
-                      <Ionicons name="time-outline" size={11} color={colors.textSecondary} />
-                      <Text style={styles.metaText}>{item.time}</Text>
-                    </View>
-                  ) : null}
-                  {item.location ? (
-                    <View style={styles.metaPill}>
-                      <Ionicons name="location-outline" size={11} color={colors.textSecondary} />
-                      <Text style={styles.metaText} numberOfLines={1}>{item.location}</Text>
-                    </View>
-                  ) : null}
+          renderItem={({ item }) => {
+            if (item.isEmpty) {
+              return (
+                <View style={styles.myScalesEmptyCard}>
+                  <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} style={{ opacity: 0.7 }} />
+                  <Text style={styles.myScalesEmptyText}>Você não está escalado para nenhum dos próximos eventos.</Text>
                 </View>
-                <View style={styles.statsRow}>
-                  <Text style={styles.statsText}>{item.song_ids.length} música{item.song_ids.length !== 1 ? 's' : ''}</Text>
-                  <Text style={styles.statsText}>·</Text>
-                  <Text style={styles.statsText}>{item.musician_ids.length} músico{item.musician_ids.length !== 1 ? 's' : ''}</Text>
+              );
+            }
+
+            return (
+              <TouchableOpacity
+                testID={`scale-item-${item.id}`}
+                style={styles.row}
+                onPress={() => router.push(`/escala/${item.id}`)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.dateBlock}>
+                  <Text style={styles.day}>{formatDay(item.date)}</Text>
+                  <Text style={styles.month}>{formatMonth(item.date)}</Text>
                 </View>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
+                <View style={styles.divider} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>{item.title}</Text>
+                  <View style={styles.metaRow}>
+                    {item.time ? (
+                      <View style={styles.metaPill}>
+                        <Ionicons name="time-outline" size={11} color={colors.textSecondary} />
+                        <Text style={styles.metaText}>{item.time}</Text>
+                      </View>
+                    ) : null}
+                    {item.location ? (
+                      <View style={styles.metaPill}>
+                        <Ionicons name="location-outline" size={11} color={colors.textSecondary} />
+                        <Text style={styles.metaText} numberOfLines={1}>{item.location}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <View style={styles.statsRow}>
+                    <Text style={styles.statsText}>{item.song_ids.length} música{item.song_ids.length !== 1 ? 's' : ''}</Text>
+                    <Text style={styles.statsText}>·</Text>
+                    <Text style={styles.statsText}>{item.musician_ids.length} músico{item.musician_ids.length !== 1 ? 's' : ''}</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            );
+          }}
         />
       )}
     </SafeAreaView>
@@ -175,4 +224,53 @@ const getStyles = (colors: any) => StyleSheet.create({
   metaText: { fontSize: font.small, color: colors.textSecondary },
   statsRow: { flexDirection: 'row', gap: 6, marginTop: 4 },
   statsText: { fontSize: font.small, color: colors.textMuted },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+    gap: spacing.xs,
+  },
+  sectionHeaderDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  sectionTitle: {
+    fontSize: font.small,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  sectionBadge: {
+    backgroundColor: 'rgba(143, 163, 200, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  sectionBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  myScalesEmptyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(143, 163, 200, 0.03)',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    gap: spacing.sm,
+    marginTop: 2,
+    marginBottom: spacing.xs,
+  },
+  myScalesEmptyText: {
+    fontSize: font.small,
+    color: colors.textMuted,
+    flex: 1,
+    lineHeight: 18,
+  },
 });
