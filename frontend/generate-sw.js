@@ -3,6 +3,8 @@
 // Uso: node generate-sw.js
 
 const { generateSW } = require('workbox-build');
+const fs = require('fs');
+const path = require('path');
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -68,6 +70,24 @@ generateSW({
 
 }).then(({ count, size }) => {
   console.log(`✅ Service Worker gerado com ${count} arquivos em cache (${(size / 1024).toFixed(1)} KB)`);
+
+  // Anexar código de Push Notifications do public/service-worker.js
+  const swPath = path.join(__dirname, 'dist/service-worker.js');
+  const customSWPath = path.join(__dirname, 'public/service-worker.js');
+
+  if (fs.existsSync(customSWPath)) {
+    const customSWContent = fs.readFileSync(customSWPath, 'utf8');
+    const pushPartIndex = customSWContent.indexOf('// ── WEB PUSH ──');
+    if (pushPartIndex !== -1) {
+      const pushCode = customSWContent.substring(pushPartIndex);
+      fs.appendFileSync(swPath, '\n\n' + pushCode);
+      console.log('✅ Listeners de Web Push anexados com sucesso a dist/service-worker.js');
+    } else {
+      console.warn('⚠️ Seção "// ── WEB PUSH ──" não encontrada em public/service-worker.js');
+    }
+  } else {
+    console.error('❌ Arquivo public/service-worker.js não encontrado para anexar listeners de Push!');
+  }
 }).catch(err => {
   console.error('❌ Erro ao gerar Service Worker:', err);
   process.exit(1);

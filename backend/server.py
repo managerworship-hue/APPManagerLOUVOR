@@ -57,7 +57,9 @@ async def send_push_to_users(user_ids: List[str], title: str, body: str, url: st
 
     for sub in subs:
         try:
-            webpush(
+            # Executar chamada de rede síncrona em segundo plano (thread) para não travar o event loop
+            await asyncio.to_thread(
+                webpush,
                 subscription_info=sub["subscription"],
                 data=payload,
                 vapid_private_key=VAPID_PRIVATE_KEY,
@@ -1219,12 +1221,48 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup():
+    global VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY
     try:
         await db.users.create_index("email", unique=True)
         await db.ministries.create_index("invite_code", unique=True)
         await db.ministries.create_index("api_key", unique=True)
         await db.scales.create_index("date")
         logger.info("✅ Conectado ao MongoDB com sucesso")
+
+        # Carregar ou gerar chaves VAPID se não configuradas no ambiente
+        if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
+            logger.info("VAPID keys não configuradas no ambiente. Verificando banco de dados...")
+            config = await db.system_config.find_one({"key": "vapid_keys"})
+            if config:
+                VAPID_PRIVATE_KEY = config.get("private_key", "")
+                VAPID_PUBLIC_KEY = config.get("public_key", "")
+                logger.info("✅ VAPID keys carregadas do banco de dados")
+            else:
+                logger.info("Gerando novas VAPID keys...")
+                try:
+                    from cryptography.hazmat.primitives.asymmetric import ec
+                    from cryptography.hazmat.primitives import serialization
+                    import base64
+
+                    private_key = ec.generate_private_key(ec.SECP256R1())
+                    private_bytes = private_key.private_numbers().private_value.to_bytes(32, byteorder='big')
+                    VAPID_PRIVATE_KEY = base64.urlsafe_b64encode(private_bytes).decode('utf-8').rstrip('=')
+
+                    public_bytes = private_key.public_key().public_bytes(
+                        encoding=serialization.Encoding.X962,
+                        format=serialization.PublicFormat.UncompressedPoints
+                    )
+                    VAPID_PUBLIC_KEY = base64.urlsafe_b64encode(public_bytes).decode('utf-8').rstrip('=')
+
+                    await db.system_config.insert_one({
+                        "key": "vapid_keys",
+                        "private_key": VAPID_PRIVATE_KEY,
+                        "public_key": VAPID_PUBLIC_KEY,
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    })
+                    logger.info("✅ Novas VAPID keys geradas e gravadas no banco de dados")
+                except Exception as ex:
+                    logger.error(f"❌ Erro ao gerar VAPID keys: {ex}", exc_info=True)
     except Exception as e:
         logger.error(f"⚠️ MongoDB indisponível no startup: {e}")
         # Servidor sobe mesmo assim — tentará conectar nas requisições@app.on_event("shutdown")

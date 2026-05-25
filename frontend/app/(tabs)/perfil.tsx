@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform,
   Modal, FlatList, ActivityIndicator, TextInput,
@@ -36,6 +36,51 @@ export default function ProfileScreen() {
   const [instrumentModal, setInstrumentModal] = useState(false);
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>(user?.instruments ?? []);
   const [savingInstruments, setSavingInstruments] = useState(false);
+
+  // Estados e Efeitos do Sininho / Permissão de Notificações
+  const [pushStatus, setPushStatus] = useState<string>('loading');
+  const [isStandalone, setIsStandalone] = useState<boolean>(true);
+
+  const checkPushPermission = useCallback(async () => {
+    if (Platform.OS !== 'web') {
+      setPushStatus('unsupported');
+      return;
+    }
+    const standalone = (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches;
+    setIsStandalone(!!standalone);
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setPushStatus('unsupported');
+      return;
+    }
+    const permission = (Notification as any).permission;
+    setPushStatus(permission);
+  }, []);
+
+  useEffect(() => {
+    checkPushPermission();
+  }, [checkPushPermission]);
+
+  const handleActivatePush = async () => {
+    if (Platform.OS !== 'web') return;
+    try {
+      const { registerPushSubscription } = await import('@/src/services/pushNotifications');
+      const success = await registerPushSubscription();
+      await checkPushPermission();
+      if (success) {
+        window.alert('Notificações push ativadas com sucesso!');
+      } else {
+        const permission = (Notification as any).permission;
+        if (permission === 'denied') {
+          window.alert('Permissão negada. Por favor, ative as notificações nas configurações do seu navegador para este site.');
+        } else {
+          window.alert('Falha ao ativar notificações push.');
+        }
+      }
+    } catch (e: any) {
+      window.alert('Erro ao ativar push: ' + e.message);
+    }
+  };
 
   // Estados da Integração Google Drive
   const [syncModalVisible, setSyncModalVisible] = useState(false);
@@ -448,6 +493,46 @@ export default function ProfileScreen() {
               </View>
               <Ionicons name={theme === 'dark' ? 'toggle' : 'toggle-outline'} size={28} color={theme === 'dark' ? colors.success : colors.textMuted} />
             </TouchableOpacity>
+
+            {/* Notificações Push */}
+            {Platform.OS === 'web' && (
+              <>
+                <View style={styles.actionDivider} />
+                <TouchableOpacity style={styles.action} onPress={handleActivatePush} activeOpacity={0.7}>
+                  <View style={[
+                    styles.actionIcon, 
+                    { backgroundColor: pushStatus === 'granted' ? '#E6F0EA' : (pushStatus === 'denied' ? '#FDE8E8' : '#FFF3CD') }
+                  ]}>
+                    <Ionicons 
+                      name={pushStatus === 'granted' ? 'notifications' : 'notifications-outline'} 
+                      size={18} 
+                      color={pushStatus === 'granted' ? colors.success : (pushStatus === 'denied' ? colors.error : colors.gold)} 
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.actionTitle}>Notificações Push</Text>
+                    <Text style={[
+                      styles.actionSubtitle, 
+                      pushStatus === 'granted' && { color: colors.success },
+                      pushStatus === 'denied' && { color: colors.error }
+                    ]}>
+                      {pushStatus === 'granted' ? 'Ativadas' : (pushStatus === 'denied' ? 'Bloqueadas no Navegador' : 'Desativadas (Tocar para Ativar)')}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+              </>
+            )}
+
+            {/* Alerta iOS Standalone */}
+            {Platform.OS === 'web' && /iPhone|iPad|iPod/i.test(navigator.userAgent) && !isStandalone && (
+              <View style={styles.iosWarning}>
+                <Ionicons name="information-circle-outline" size={16} color={colors.gold} />
+                <Text style={styles.iosWarningText}>
+                  No iOS, adicione a app ao Ecrã Inicial (Compartilhar → Adicionar ao Ecrã de Início) para ativar notificações push.
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -1019,4 +1104,21 @@ const getStyles = (colors: any) => StyleSheet.create({
   permanentConfiguredCard: { backgroundColor: '#E6F0EA', borderRadius: radius.lg, borderWidth: 1, borderColor: colors.success, padding: spacing.lg, alignItems: 'center' },
   permanentConfiguredTitle: { fontSize: font.h3, fontWeight: '700', color: '#1B5E20', marginBottom: 6, textAlign: 'center' },
   permanentConfiguredSub: { fontSize: font.caption, color: '#2E7D32', textAlign: 'center', lineHeight: 18 },
+  iosWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(235, 197, 89, 0.05)',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(235, 197, 89, 0.2)',
+  },
+  iosWarningText: {
+    fontSize: 10,
+    color: colors.gold,
+    flex: 1,
+    lineHeight: 15,
+  },
 });
