@@ -55,7 +55,7 @@ export default function LoginScreen() {
             <View style={styles.brandMark}>
               <Image source={APP_ICON} style={styles.brandIcon} resizeMode="cover" />
             </View>
-            <Text style={styles.brandTitle}>LouvorApp</Text>
+            <Text style={styles.brandTitle}>Worship Manager</Text>
             <Text style={styles.brandSubtitle}>Gestão de ministério de louvor</Text>
           </View>
 

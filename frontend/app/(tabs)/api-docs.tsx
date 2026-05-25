@@ -36,7 +36,7 @@ const ENDPOINTS = [
 
 const JESUSMEAJUDA_STEPS = [
   'Abre a app JesusMeAjuda no browser.',
-  'No painel esquerdo, clica em "LouvorApp" no fundo.',
+  'No painel esquerdo, clica em "Worship Manager" no fundo.',
   'Clica em "Configurar ligação".',
   'Cola o URL do servidor (Base URL abaixo) e a tua API Key.',
   'Clica em "Ligar" — as escalas aparecem automaticamente.',

@@ -1,4 +1,4 @@
-"""LouvorApp backend API tests - covers auth, ministry, songs, scales,
+"""Worship Manager backend API tests - covers auth, ministry, songs, scales,
 announcements, stats, external X-API-Key endpoints, multi-tenancy and
 permission enforcement."""
 
@@ -15,7 +15,7 @@ class TestHealth:
         assert r.status_code == 200
         body = r.json()
         assert body.get("status") == "ok"
-        assert body.get("app") == "LouvorApp"
+        assert body.get("app") == "Worship Manager"
 
 
 # -----------------------------

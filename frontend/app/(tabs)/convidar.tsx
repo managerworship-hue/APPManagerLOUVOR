@@ -24,7 +24,7 @@ export default function ConvidarScreen() {
   const code = ministry?.invite_code || '------';
 
   const message =
-    `🎵 Junte-se ao ministério *${ministry?.name}* no LouvorApp!\n\n` +
+    `🎵 Junte-se ao ministério *${ministry?.name}* no Worship Manager!\n\n` +
     `📱 Acesse a app: ${APP_URL}\n\n` +
     `🔑 Código de convite: *${code}*\n\n` +
     `Cadastre-se na app e insira o código acima para entrar no ministério.`;

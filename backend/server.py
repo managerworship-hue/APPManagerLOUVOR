@@ -37,7 +37,7 @@ JWT_EXPIRE_MINUTES = int(os.environ.get('JWT_EXPIRE_MINUTES', '10080'))
 # VAPID para Web Push (gera em https://vapidkeys.com ou com npx web-push generate-vapid-keys)
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
-VAPID_CLAIMS = {"sub": "mailto:admin@louvorapp.com"}
+VAPID_CLAIMS = {"sub": "mailto:admin@worshipmanager.com"}
 
 async def send_push_to_users(user_ids: List[str], title: str, body: str, url: str = '/'):
     """Envia notificação push a uma lista de utilizadores pelo ID."""
@@ -92,7 +92,7 @@ ROLE_LEADER = "leader"
 ROLE_MEMBER = "member"
 
 # App
-app = FastAPI(title="LouvorApp API")
+app = FastAPI(title="Worship Manager API")
 api_router = APIRouter(prefix="/api")
 
 
@@ -267,7 +267,7 @@ async def get_ministry_by_api_key(x_api_key: Optional[str] = Header(None, alias=
 
 @api_router.get("/")
 async def root():
-    return {"app": "LouvorApp", "status": "ok"}
+    return {"app": "Worship Manager", "status": "ok"}
 
 
 # ---- AUTH ----
