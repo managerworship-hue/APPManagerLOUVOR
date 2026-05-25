@@ -40,14 +40,136 @@ export default function ProfileScreen() {
   const [progressText, setProgressText] = useState('');
   const [syncResult, setSyncResult] = useState<{ success: boolean; count: number; errors: string[] } | null>(null);
 
-  // Carregar Client ID guardado nas preferências
+  // Estados Adicionais da Sincronização Permanente
+  const [activeTab, setActiveTab] = useState<'session' | 'permanent'>('permanent');
+  const [permanentConfigured, setPermanentConfigured] = useState(false);
+  const [clientSecret, setClientSecret] = useState('');
+  const [refreshToken, setRefreshToken] = useState('');
+  const [savingPermanent, setSavingPermanent] = useState(false);
+
+  // Carregar configurações do Google ao abrir o modal
   useEffect(() => {
-    if (isLeader) {
+    if (syncModalVisible && isLeader) {
+      // Carregar Client ID local se houver
       storage.getItem('google_client_id', '').then((saved) => {
         if (saved) setClientId(saved);
       });
+      // Verificar se há credenciais permanentes no backend
+      api<{ configured: boolean; client_id?: string }>('/songs/import/google-drive/config')
+        .then((res) => {
+          setPermanentConfigured(res.configured);
+          if (res.client_id) {
+            setClientId(res.client_id);
+          }
+        })
+        .catch(() => {});
     }
-  }, [isLeader]);
+  }, [syncModalVisible, isLeader]);
+
+  const handleSavePermanentConfig = async () => {
+    if (!clientId.trim() || !clientSecret.trim() || !refreshToken.trim()) {
+      if (Platform.OS === 'web') {
+        window.alert('Por favor, preencha todos os campos da conexão permanente.');
+      } else {
+        Alert.alert('Erro', 'Por favor, preencha todos os campos da conexão permanente.');
+      }
+      return;
+    }
+
+    setSavingPermanent(true);
+    setSyncResult(null);
+    try {
+      await api('/songs/import/google-drive/config', {
+        method: 'POST',
+        body: {
+          client_id: clientId.trim(),
+          client_secret: clientSecret.trim(),
+          refresh_token: refreshToken.trim(),
+        },
+      });
+
+      // Guardar o Client ID local para preenchimento futuro
+      await storage.setItem('google_client_id', clientId.trim());
+      setPermanentConfigured(true);
+      setClientSecret('');
+      setRefreshToken('');
+      
+      if (Platform.OS === 'web') {
+        window.alert('Sincronização permanente configurada com sucesso!');
+      } else {
+        Alert.alert('Sucesso', 'Sincronização permanente configurada com sucesso!');
+      }
+    } catch (e: any) {
+      if (Platform.OS === 'web') {
+        window.alert(e.message || 'Erro ao validar as credenciais.');
+      } else {
+        Alert.alert('Erro', e.message || 'Erro ao validar as credenciais.');
+      }
+    } finally {
+      setSavingPermanent(false);
+    }
+  };
+
+  const handleDeletePermanentConfig = async () => {
+    const doDelete = async () => {
+      try {
+        await api('/songs/import/google-drive/config', { method: 'DELETE' });
+        setPermanentConfigured(false);
+        if (Platform.OS === 'web') {
+          window.alert('Sincronização permanente desativada.');
+        } else {
+          Alert.alert('Desativado', 'Sincronização permanente desativada.');
+        }
+      } catch (e: any) {
+        if (Platform.OS === 'web') {
+          window.alert('Erro ao desativar: ' + e.message);
+        } else {
+          Alert.alert('Erro', 'Erro ao desativar: ' + e.message);
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Tem certeza de que deseja remover as credenciais salvas no servidor?')) {
+        await doDelete();
+      }
+    } else {
+      Alert.alert(
+        'Remover Credenciais',
+        'Tem certeza de que deseja remover as credenciais salvas no servidor?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Remover', style: 'destructive', onPress: doDelete },
+        ]
+      );
+    }
+  };
+
+  const handlePermanentSync = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    setProgressText('A contactar o servidor e a renovar token do Google Drive...');
+    
+    try {
+      const res = await api<{ ok: boolean; imported_count: number; errors: string[] }>('/songs/import/google-drive/sync', {
+        method: 'POST',
+      });
+      
+      setSyncResult({
+        success: true,
+        count: res.imported_count,
+        errors: res.errors,
+      });
+    } catch (e: any) {
+      setSyncResult({
+        success: false,
+        count: 0,
+        errors: [e.message || 'Erro desconhecido na sincronização'],
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleGoogleAuth = async () => {
     if (!clientId.trim()) {
@@ -485,88 +607,215 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* Configuração profissional (OAuth Popup) - Apenas Web */}
-            {Platform.OS === 'web' && (
-              <View style={styles.sectionImport}>
-                <Text style={styles.inputLabel}>MÉTODO 1: POP-UP DE LOGIN DO GOOGLE</Text>
-                <View style={styles.inputWrap}>
-                  <Text style={styles.inputSubLabel}>Introduza o seu Google Client ID:</Text>
-                  <TextInput
-                    value={clientId}
-                    onChangeText={setClientId}
-                    placeholder="xxxxxxxx.apps.googleusercontent.com"
-                    placeholderTextColor={colors.textMuted}
-                    style={styles.input}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
+            {/* Seletor de Abas */}
+            <View style={styles.tabSelector}>
+              <TouchableOpacity
+                style={[styles.tabBtn, activeTab === 'permanent' && styles.tabBtnActive]}
+                onPress={() => { setActiveTab('permanent'); setSyncResult(null); }}
+              >
+                <Ionicons name="flash-outline" size={16} color={activeTab === 'permanent' ? colors.primary : colors.textSecondary} />
+                <Text style={[styles.tabBtnText, activeTab === 'permanent' && styles.tabBtnTextActive]}>
+                  Permanente
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tabBtn, activeTab === 'session' && styles.tabBtnActive]}
+                onPress={() => { setActiveTab('session'); setSyncResult(null); }}
+              >
+                <Ionicons name="key-outline" size={16} color={activeTab === 'session' ? colors.primary : colors.textSecondary} />
+                <Text style={[styles.tabBtnText, activeTab === 'session' && styles.tabBtnTextActive]}>
+                  Sessão (Token)
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-                <TouchableOpacity
-                  style={[styles.btnPrimary, syncing && { opacity: 0.6 }]}
-                  onPress={handleGoogleAuth}
-                  disabled={syncing}
-                >
-                  {syncing ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.btnPrimaryText}>Conectar e Sincronizar</Text>
-                  )}
-                </TouchableOpacity>
+            {activeTab === 'permanent' && (
+              <View style={{ gap: spacing.md }}>
+                {permanentConfigured ? (
+                  <View style={styles.permanentConfiguredCard}>
+                    <Ionicons name="checkmark-circle-outline" size={32} color={colors.success} style={{ marginBottom: spacing.xs }} />
+                    <Text style={styles.permanentConfiguredTitle}>Conexão Permanente Ativa!</Text>
+                    <Text style={styles.permanentConfiguredSub}>
+                      As credenciais do Google Drive estão configuradas e prontas. O seu ministério pode sincronizar músicas a qualquer momento com 1 clique!
+                    </Text>
+
+                    <TouchableOpacity
+                      style={[styles.btnPrimary, { width: '100%', marginTop: spacing.md }, syncing && { opacity: 0.6 }]}
+                      onPress={handlePermanentSync}
+                      disabled={syncing}
+                    >
+                      {syncing ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.btnPrimaryText}>Sincronizar Agora (1-Clique)</Text>
+                      )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={{ marginTop: spacing.lg }}
+                      onPress={handleDeletePermanentConfig}
+                    >
+                      <Text style={{ color: colors.error, fontWeight: '600', fontSize: font.caption, textDecorationLine: 'underline' }}>
+                        Desativar Conexão Permanente
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.sectionImport}>
+                    <Text style={styles.inputLabel}>CONFIGURAR SINCRONIZAÇÃO PERMANENTE</Text>
+                    <Text style={styles.inputHelper}>
+                      Configure uma vez e sincronize para sempre sem precisar introduzir tokens todas as vezes!
+                      {"\n\n"}
+                      1. Crie uma aplicação na <Text style={{fontWeight: '700'}}>Google Cloud Console</Text> para obter o seu <Text style={{fontWeight: '700'}}>Client ID</Text> e <Text style={{fontWeight: '700'}}>Client Secret</Text>.
+                      {"\n"}
+                      2. Vá ao <Text style={{fontWeight: '700'}}>Google OAuth Playground</Text> (link abaixo), selecione o escopo "drive.readonly" e autorize.
+                      {"\n"}
+                      3. No Passo 2, clique em "Exchange authorization code" e copie o seu <Text style={{fontWeight: '700'}}>Refresh Token</Text> permanente!
+                    </Text>
+
+                    <View style={styles.inputWrap}>
+                      <Text style={styles.inputSubLabel}>Google Client ID:</Text>
+                      <TextInput
+                        value={clientId}
+                        onChangeText={setClientId}
+                        placeholder="xxxxxxxx.apps.googleusercontent.com"
+                        placeholderTextColor={colors.textMuted}
+                        style={styles.input}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                      />
+                    </View>
+
+                    <View style={styles.inputWrap}>
+                      <Text style={styles.inputSubLabel}>Google Client Secret:</Text>
+                      <TextInput
+                        value={clientSecret}
+                        onChangeText={setClientSecret}
+                        placeholder="GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx"
+                        placeholderTextColor={colors.textMuted}
+                        style={styles.input}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        secureTextEntry
+                      />
+                    </View>
+
+                    <View style={styles.inputWrap}>
+                      <Text style={styles.inputSubLabel}>Google Refresh Token:</Text>
+                      <TextInput
+                        value={refreshToken}
+                        onChangeText={setRefreshToken}
+                        placeholder="1//0xxxxxxxxxxxxxxxxxxxxxx..."
+                        placeholderTextColor={colors.textMuted}
+                        style={styles.input}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        secureTextEntry
+                      />
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.btnPrimary, { backgroundColor: colors.success }, savingPermanent && { opacity: 0.6 }]}
+                      onPress={handleSavePermanentConfig}
+                      disabled={savingPermanent}
+                    >
+                      {savingPermanent ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.btnPrimaryText}>Gravar e Ativar Permanente</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
 
-            {Platform.OS === 'web' && <View style={styles.dividerWrap}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OU</Text>
-              <View style={styles.dividerLine} />
-            </View>}
+            {activeTab === 'session' && (
+              <View style={{ gap: spacing.md }}>
+                {/* Configuração profissional (OAuth Popup) - Apenas Web */}
+                {Platform.OS === 'web' && (
+                  <View style={styles.sectionImport}>
+                    <Text style={styles.inputLabel}>MÉTODO 1: POP-UP DE LOGIN DO GOOGLE</Text>
+                    <View style={styles.inputWrap}>
+                      <Text style={styles.inputSubLabel}>Introduza o seu Google Client ID:</Text>
+                      <TextInput
+                        value={clientId}
+                        onChangeText={setClientId}
+                        placeholder="xxxxxxxx.apps.googleusercontent.com"
+                        placeholderTextColor={colors.textMuted}
+                        style={styles.input}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                      />
+                    </View>
 
-            {/* Configuração rápida por Access Token - Suporta Web e Mobile */}
-            <View style={styles.sectionImport}>
-              <Text style={styles.inputLabel}>
-                {Platform.OS === 'web' ? 'MÉTODO 2: TOKEN DE ACESSO DIRETO' : 'TOKEN DE ACESSO DO GOOGLE'}
-              </Text>
-              <Text style={styles.inputHelper}>
-                Obtenha o seu token temporário em 10 segundos no{" "}
-                <Text
-                  style={{ color: colors.primary, textDecorationLine: 'underline' }}
-                  onPress={() => {
-                    if (Platform.OS === 'web') {
-                      window.open('https://developers.google.com/oauthplayground', '_blank');
-                    }
-                  }}
-                >
-                  Google OAuth Playground
-                </Text>{" "}
-                (selecione o escopo "Drive API v3 - drive.readonly" e autorize).
-              </Text>
-
-              <View style={styles.inputWrap}>
-                <Text style={styles.inputSubLabel}>Cole o seu Access Token:</Text>
-                <TextInput
-                  value={accessToken}
-                  onChangeText={setAccessToken}
-                  placeholder="ya29.a0Axoo..."
-                  placeholderTextColor={colors.textMuted}
-                  style={styles.input}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={[styles.btnPrimary, { backgroundColor: colors.info }, syncing && { opacity: 0.6 }]}
-                onPress={handleManualSync}
-                disabled={syncing}
-              >
-                {syncing ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.btnPrimaryText}>Sincronizar com Token</Text>
+                    <TouchableOpacity
+                      style={[styles.btnPrimary, syncing && { opacity: 0.6 }]}
+                      onPress={handleGoogleAuth}
+                      disabled={syncing}
+                    >
+                      {syncing ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.btnPrimaryText}>Conectar e Sincronizar</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 )}
-              </TouchableOpacity>
-            </View>
+
+                {Platform.OS === 'web' && <View style={styles.dividerWrap}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>OU</Text>
+                  <View style={styles.dividerLine} />
+                </View>}
+
+                {/* Configuração rápida por Access Token - Suporta Web e Mobile */}
+                <View style={styles.sectionImport}>
+                  <Text style={styles.inputLabel}>
+                    {Platform.OS === 'web' ? 'MÉTODO 2: TOKEN DE ACESSO DIRETO' : 'TOKEN DE ACESSO DO GOOGLE'}
+                  </Text>
+                  <Text style={styles.inputHelper}>
+                    Obtenha o seu token temporário em 10 segundos no{" "}
+                    <Text
+                      style={{ color: colors.primary, textDecorationLine: 'underline' }}
+                      onPress={() => {
+                        if (Platform.OS === 'web') {
+                          window.open('https://developers.google.com/oauthplayground', '_blank');
+                        }
+                      }}
+                    >
+                      Google OAuth Playground
+                    </Text>{" "}
+                    (selecione o escopo "Drive API v3 - drive.readonly" e autorize).
+                  </Text>
+
+                  <View style={styles.inputWrap}>
+                    <Text style={styles.inputSubLabel}>Cole o seu Access Token:</Text>
+                    <TextInput
+                      value={accessToken}
+                      onChangeText={setAccessToken}
+                      placeholder="ya29.a0Axoo..."
+                      placeholderTextColor={colors.textMuted}
+                      style={styles.input}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.btnPrimary, { backgroundColor: colors.info }, syncing && { opacity: 0.6 }]}
+                    onPress={handleManualSync}
+                    disabled={syncing}
+                  >
+                    {syncing ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.btnPrimaryText}>Sincronizar com Token</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             {/* Status e Resultados */}
             {syncing && (
@@ -689,4 +938,14 @@ const styles = StyleSheet.create({
   resultText: { fontSize: font.caption, color: colors.text, textAlign: 'center', lineHeight: 16 },
   errorLabel: { fontSize: font.caption, fontWeight: '700', color: colors.error, marginBottom: spacing.xs, marginTop: 4, width: '100%' },
   errorItem: { fontSize: font.small, color: colors.textSecondary, marginBottom: 2, width: '100%' },
+
+  // Estilos da Sincronização Permanente
+  tabSelector: { flexDirection: 'row', backgroundColor: colors.bg, borderRadius: radius.md, padding: 4, marginBottom: spacing.lg, borderColor: colors.border, borderWidth: 1 },
+  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: radius.sm },
+  tabBtnActive: { backgroundColor: colors.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
+  tabBtnText: { fontSize: font.body, color: colors.textSecondary, fontWeight: '600' },
+  tabBtnTextActive: { color: colors.primary, fontWeight: '700' },
+  permanentConfiguredCard: { backgroundColor: '#E6F0EA', borderRadius: radius.lg, borderWidth: 1, borderColor: colors.success, padding: spacing.lg, alignItems: 'center' },
+  permanentConfiguredTitle: { fontSize: font.h3, fontWeight: '700', color: '#1B5E20', marginBottom: 6, textAlign: 'center' },
+  permanentConfiguredSub: { fontSize: font.caption, color: '#2E7D32', textAlign: 'center', lineHeight: 18 },
 });

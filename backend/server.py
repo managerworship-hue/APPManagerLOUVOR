@@ -171,6 +171,11 @@ class PushSubscriptionReq(BaseModel):
 class GoogleDriveImportReq(BaseModel):
     access_token: str
 
+class GoogleSyncConfigReq(BaseModel):
+    client_id: str
+    client_secret: str
+    refresh_token: str
+
 
 # ============ HELPERS ============
 
@@ -658,6 +663,97 @@ async def import_from_google_drive(req: GoogleDriveImportReq, user: dict = Depen
     except Exception as e:
         logger.error(f"Erro geral durante importação do Google Drive: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erro ao conectar com Google Drive: {str(e)}")
+
+def refresh_google_access_token(client_id: str, client_secret: str, refresh_token: str) -> str:
+    import requests
+    url = "https://oauth2.googleapis.com/token"
+    data = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token"
+    }
+    r = requests.post(url, data=data, timeout=10)
+    if r.status_code != 200:
+        raise Exception(f"Falha ao renovar o token do Google: {r.text}")
+    res = r.json()
+    return res["access_token"]
+
+@api_router.get("/songs/import/google-drive/config")
+async def get_google_sync_config(user: dict = Depends(require_leader)):
+    m = await db.ministries.find_one({"_id": user["ministry_id"]})
+    if not m:
+        raise HTTPException(status_code=404, detail="Ministério não encontrado")
+    config = m.get("google_sync_credentials")
+    if not config:
+        return {"configured": False}
+    return {
+        "configured": True,
+        "client_id": config.get("client_id", "")
+    }
+
+@api_router.post("/songs/import/google-drive/config")
+async def save_google_sync_config(req: GoogleSyncConfigReq, user: dict = Depends(require_leader)):
+    try:
+        # Validar se as credenciais funcionam fazendo um refresh teste
+        refresh_google_access_token(
+            req.client_id.strip(),
+            req.client_secret.strip(),
+            req.refresh_token.strip()
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Credenciais do Google inválidas. Verifique os dados introduzidos: {str(e)}"
+        )
+
+    await db.ministries.update_one(
+        {"_id": user["ministry_id"]},
+        {"$set": {
+            "google_sync_credentials": {
+                "client_id": req.client_id.strip(),
+                "client_secret": req.client_secret.strip(),
+                "refresh_token": req.refresh_token.strip(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }}
+    )
+    return {"ok": True, "message": "Sincronização permanente ativada e validada com sucesso!"}
+
+@api_router.delete("/songs/import/google-drive/config")
+async def delete_google_sync_config(user: dict = Depends(require_leader)):
+    await db.ministries.update_one(
+        {"_id": user["ministry_id"]},
+        {"$unset": {"google_sync_credentials": ""}}
+    )
+    return {"ok": True}
+
+@api_router.post("/songs/import/google-drive/sync")
+async def sync_google_drive_permanent(user: dict = Depends(require_leader)):
+    m = await db.ministries.find_one({"_id": user["ministry_id"]})
+    if not m:
+        raise HTTPException(status_code=404, detail="Ministério não encontrado")
+    config = m.get("google_sync_credentials")
+    if not config:
+        raise HTTPException(
+            status_code=400,
+            detail="Sincronização permanente não configurada. Configure as suas credenciais no Perfil primeiro."
+        )
+
+    try:
+        access_token = refresh_google_access_token(
+            config["client_id"],
+            config["client_secret"],
+            config["refresh_token"]
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Falha ao renovar o acesso ao Google Drive: {str(e)}"
+        )
+
+    import_req = GoogleDriveImportReq(access_token=access_token)
+    return await import_from_google_drive(import_req, user)
 
 
 # ---- SCALES ----
