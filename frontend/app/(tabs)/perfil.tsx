@@ -11,6 +11,7 @@ import { api } from '@/src/api/client';
 import { storage } from '@/src/utils/storage';
 import { useTheme } from '@/src/context/ThemeContext';
 import { radius, font, spacing } from '@/src/theme';
+import versionData from '@/src/version.json';
 
 const INSTRUMENT_LIST = [
   'Violão', 'Guitarra', 'Baixo', 'Teclado', 'Piano', 'Bateria', 'Percussão',
@@ -511,7 +512,7 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>LouvorApp · v2.0</Text>
+        <Text style={styles.version}>LouvorApp · v{versionData.version}</Text>
       </ScrollView>
 
       {/* Modal de avatares */}
