@@ -25,7 +25,8 @@ export default function TabsLayout() {
   }
 
   // Padding inferior = safe area (home indicator) + espaço para o label
-  const tabBarHeight = 50 + insets.bottom;
+  // Base de 62px: ícone (~24px) + label (~14px) + padding top (8) + padding bottom (8) + margem
+  const tabBarHeight = 62 + insets.bottom;
 
   return (
     <Tabs
@@ -46,6 +47,7 @@ export default function TabsLayout() {
           fontSize: 11,
           fontWeight: '600',
           letterSpacing: 0.3,
+          marginTop: 2,
         },
       }}
     >
