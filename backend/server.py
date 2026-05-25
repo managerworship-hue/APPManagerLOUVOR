@@ -1148,20 +1148,39 @@ async def ext_scale_detail(scale_id: str, m: dict = Depends(get_ministry_by_api_
 
 # ---- NOTIFICATIONS ----
 
+async def cleanup_read_notifications():
+    """Remove notificações lidas há mais de 7 dias."""
+    try:
+        limit_time = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        res = await db.notifications.delete_many({
+            "read": True,
+            "$or": [
+                {"read_at": {"$lt": limit_time}},
+                {"read_at": {"$exists": False}, "created_at": {"$lt": limit_time}}
+            ]
+        })
+        if res.deleted_count > 0:
+            logger.info(f"🧹 Auto-delete: {res.deleted_count} notificações lidas há mais de 7 dias foram excluídas.")
+    except Exception as e:
+        logger.error(f"Erro no auto-delete de notificações: {e}", exc_info=True)
+
 @api_router.get("/notifications", response_model=List[NotificationOut])
 async def list_notifications(user: dict = Depends(get_current_user)):
+    await cleanup_read_notifications()
     cursor = db.notifications.find({"user_id": user["_id"]}).sort("created_at", -1)
     items = await cursor.to_list(100)
     return [serialize_notification(n) for n in items]
 
 @api_router.post("/notifications/read-all")
 async def read_all_notifications(user: dict = Depends(get_current_user)):
-    await db.notifications.update_many({"user_id": user["_id"], "read": False}, {"$set": {"read": True}})
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.notifications.update_many({"user_id": user["_id"], "read": False}, {"$set": {"read": True, "read_at": now_iso}})
     return {"ok": True}
 
 @api_router.post("/notifications/mark-read/{notif_id}")
 async def mark_notification_read(notif_id: str, user: dict = Depends(get_current_user)):
-    await db.notifications.update_one({"_id": notif_id, "user_id": user["_id"]}, {"$set": {"read": True}})
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await db.notifications.update_one({"_id": notif_id, "user_id": user["_id"]}, {"$set": {"read": True, "read_at": now_iso}})
     return {"ok": True}
 
 
