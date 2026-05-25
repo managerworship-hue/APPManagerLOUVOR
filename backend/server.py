@@ -524,26 +524,39 @@ async def import_from_google_drive(req: GoogleDriveImportReq, user: dict = Depen
         imported_count = 0
         errors = []
         
+        if not song_folders:
+            errors.append("Aviso: Nenhuma subpasta de música foi encontrada dentro da pasta 'Louvor'. Certifique-se de criar uma pasta para cada música.")
+        
         for folder in song_folders:
             folder_id = folder["id"]
             folder_name = folder["name"]
             
-            # Procurar arquivos .docx ou .pdf dentro da subpasta
-            query = f"'{folder_id}' in parents and (mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' or mimeType = 'application/pdf') and trashed = false"
+            # Procurar arquivos .docx, .pdf ou Google Docs dentro da subpasta
+            query = f"'{folder_id}' in parents and (mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' or mimeType = 'application/pdf' or mimeType = 'application/vnd.google-apps.document') and trashed = false"
             response = service.files().list(q=query, spaces="drive", fields="files(id, name, mimeType)").execute()
             files_in_folder = response.get("files", [])
             
             if not files_in_folder:
+                errors.append(f"Aviso: A pasta '{folder_name}' não contém arquivos .docx, .pdf ou Google Docs válidos.")
                 continue
                 
-            # Pegar o primeiro arquivo .docx ou .pdf encontrado
+            # Pegar o primeiro arquivo encontrado
             file_to_parse = files_in_folder[0]
             file_id = file_to_parse["id"]
+            file_name = file_to_parse["name"]
             mime_type = file_to_parse["mimeType"]
             
             try:
-                # Baixar o arquivo em memória
-                file_content = service.files().get_media(fileId=file_id).execute()
+                # Baixar ou exportar o arquivo em memória
+                if mime_type == 'application/vnd.google-apps.document':
+                    # Exportar Google Doc nativo como Word (.docx)
+                    file_content = service.files().export(
+                        fileId=file_id, 
+                        mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    ).execute()
+                    mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                else:
+                    file_content = service.files().get_media(fileId=file_id).execute()
                 
                 # Extrair texto com base no tipo de arquivo
                 text = ""
@@ -562,11 +575,13 @@ async def import_from_google_drive(req: GoogleDriveImportReq, user: dict = Depen
                     text = "\n".join(pages_text)
                     
                 if not text.strip():
+                    errors.append(f"Aviso: O arquivo '{file_name}' na pasta '{folder_name}' está vazio.")
                     continue
                     
                 # Analisar a primeira linha para extrair título, tom, bpm
                 lines = [l.strip() for l in text.split("\n") if l.strip()]
                 if not lines:
+                    errors.append(f"Aviso: Não foi possível ler texto no arquivo '{file_name}'.")
                     continue
                     
                 first_line = lines[0]
@@ -589,6 +604,7 @@ async def import_from_google_drive(req: GoogleDriveImportReq, user: dict = Depen
                     key = ""
                     bpm = None
                     lyrics = text
+                    errors.append(f"Info: Arquivo '{file_name}' não segue o formato '[NOME - TOM - BPM]'. Usámos o nome da pasta '{title}' como título.")
                     
                 # Verificar se já existe uma música com este título no ministério
                 existing = await db.songs.find_one({
@@ -597,6 +613,7 @@ async def import_from_google_drive(req: GoogleDriveImportReq, user: dict = Depen
                 })
                 
                 if existing:
+                    errors.append(f"Info: A música '{title}' já existe no seu repertório (ignorada).")
                     # Se a música já existir, mas estiver sem letra ou tom, atualiza-a
                     if not existing.get("lyrics") or not existing.get("key"):
                         await db.songs.update_one(
@@ -624,6 +641,7 @@ async def import_from_google_drive(req: GoogleDriveImportReq, user: dict = Depen
                 }
                 await db.songs.insert_one(new_song)
                 imported_count += 1
+                errors.append(f"Sucesso: Música '{title}' importada!")
                 
             except Exception as e:
                 logger.error(f"Erro ao processar arquivo do Google Drive para {folder_name}: {str(e)}")
