@@ -5,39 +5,39 @@ import { storage } from '@/src/utils/storage';
 export type ThemeType = 'light' | 'dark';
 
 export const lightColors = {
-  bg: '#F9F9F8',
-  surface: '#FFFFFF',
-  surfaceAlt: '#F3F2F0',
-  border: '#E8E8E6',
-  text: '#0F141E',
-  textSecondary: '#626773',
-  textMuted: '#9CA3AF',
-  primary: '#1A2B4C',
-  primaryHover: '#2B406A',
-  gold: '#C5A059',
-  goldHover: '#DFB668',
-  success: '#2E6B4E',
-  warning: '#B07A25',
-  error: '#9B2C2C',
-  info: '#1D4ED8',
+  bg: '#F2F7F8',          // Off-white suave com tom azul-petróleo gelado
+  surface: '#FFFFFF',     // Branco puro para contêineres e cartões
+  surfaceAlt: '#EBF2F4',  // Destaque de superfície sutil e claro
+  border: '#E1ECEF',      // Borda clara integrada ao tema
+  text: '#08282D',        // Azul-petróleo profundo quase preto
+  textSecondary: '#3D5A60', // Azul-petróleo médio para informações secundárias
+  textMuted: '#7B969C',    // Texto atenuado/captions
+  primary: '#0B727F',     // Azul-petróleo rico e sofisticado (Reviver Teal)
+  primaryHover: '#085863', // Destaque escuro interativo
+  gold: '#C2A478',        // Ouro-champanhe premium para contrastes de destaque
+  goldHover: '#D2B78D',   // Ouro-champanhe claro interativo
+  success: '#1EA07E',     // Verde-menta suave de sucesso
+  warning: '#D97706',     // Âmbar elegante
+  error: '#DC2626',       // Vermelho vivo
+  info: '#0D9488',        // Ciano elegante de informação
 };
 
 export const darkColors = {
-  bg: '#121212',
-  surface: '#1E1E1E',
-  surfaceAlt: '#2A2A2A',
-  border: '#333333',
-  text: '#F3F4F6',
-  textSecondary: '#9CA3AF',
-  textMuted: '#6B7280',
-  primary: '#3B82F6',
-  primaryHover: '#60A5FA',
-  gold: '#FBBF24',
-  goldHover: '#FCD34D',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  info: '#3B82F6',
+  bg: '#052429',          // O azul-petróleo de luxo da base da foto
+  surface: '#09343B',     // Superfície de cartão integrada da região média da foto
+  surfaceAlt: '#0D454E',  // Destaque de cartão ativo
+  border: '#125661',      // Bordas sutis integradas
+  text: '#F0FDFA',        // Branco-menta muito suave e premium
+  textSecondary: '#95C1C8', // Ciano pastel para subtítulos e descrições
+  textMuted: '#62939B',    // Texto atenuado no modo escuro
+  primary: '#17B3C4',     // O ciano vibrante/luminoso central do logotipo Reviver
+  primaryHover: '#39C7D6', // Ciano luminoso brilhante ativo
+  gold: '#CCA462',        // Ouro-champanhe de luxo
+  goldHover: '#DBC08C',   // Ouro-champanhe brilhante ativo
+  success: '#10B981',     // Verde vibrante de sucesso
+  warning: '#F59E0B',     // Laranja vibrante de atenção
+  error: '#EF4444',       // Vermelho vibrante de erro
+  info: '#17B3C4',        // Ciano vibrante
 };
 
 type ThemeContextType = {

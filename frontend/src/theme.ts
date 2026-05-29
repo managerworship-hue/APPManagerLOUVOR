@@ -1,19 +1,19 @@
 export const colors = {
-  bg: '#F9F9F8',
-  surface: '#FFFFFF',
-  surfaceAlt: '#F3F2F0',
-  border: '#E8E8E6',
-  text: '#0F141E',
-  textSecondary: '#626773',
-  textMuted: '#9CA3AF',
-  primary: '#1A2B4C',
-  primaryHover: '#2B406A',
-  gold: '#C5A059',
-  goldHover: '#DFB668',
-  success: '#2E6B4E',
-  warning: '#B07A25',
-  error: '#9B2C2C',
-  info: '#1D4ED8',
+  bg: '#F2F7F8',          // Off-white suave com tom azul-petróleo gelado
+  surface: '#FFFFFF',     // Branco puro para contêineres e cartões
+  surfaceAlt: '#EBF2F4',  // Destaque de superfície sutil e claro
+  border: '#E1ECEF',      // Borda clara integrada ao tema
+  text: '#08282D',        // Azul-petróleo profundo quase preto
+  textSecondary: '#3D5A60', // Azul-petróleo médio para informações secundárias
+  textMuted: '#7B969C',    // Texto atenuado/captions
+  primary: '#0B727F',     // Azul-petróleo rico e sofisticado (Reviver Teal)
+  primaryHover: '#085863', // Destaque escuro interativo
+  gold: '#C2A478',        // Ouro-champanhe premium para contrastes de destaque
+  goldHover: '#D2B78D',   // Ouro-champanhe claro interativo
+  success: '#1EA07E',     // Verde-menta suave de sucesso
+  warning: '#D97706',     // Âmbar elegante
+  error: '#DC2626',       // Vermelho vivo
+  info: '#0D9488',        // Ciano elegante de informação
 };
 
 export const radius = {
