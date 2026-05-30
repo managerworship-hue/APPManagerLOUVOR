@@ -1,19 +1,19 @@
 export const colors = {
-  bg: '#F2F7F8',          // Off-white suave com tom azul-petróleo gelado
-  surface: '#FFFFFF',     // Branco puro para contêineres e cartões
-  surfaceAlt: '#EBF2F4',  // Destaque de superfície sutil e claro
-  border: '#E1ECEF',      // Borda clara integrada ao tema
-  text: '#08282D',        // Azul-petróleo profundo quase preto
-  textSecondary: '#3D5A60', // Azul-petróleo médio para informações secundárias
-  textMuted: '#7B969C',    // Texto atenuado/captions
-  primary: '#0B727F',     // Azul-petróleo rico e sofisticado (Reviver Teal)
-  primaryHover: '#085863', // Destaque escuro interativo
-  gold: '#C2A478',        // Ouro-champanhe premium para contrastes de destaque
+  bg: '#F8F9FA',          // Off-white minimalista e extremamente limpo
+  surface: '#FFFFFF',     // Branco puro para os cartões
+  surfaceAlt: '#F1F3F5',  // Destaque de superfície sutil
+  border: '#E9ECEF',      // Borda sutil e muito limpa
+  text: '#1A1D20',        // Preto-ardósia profundo, muito elegante e legível
+  textSecondary: '#495057', // Cinza-carvão para subtítulos
+  textMuted: '#868E96',    // Cinza atenuado para rótulos secundários
+  primary: '#4F46E5',     // Indigo profundo e nobre (Royal Indigo)
+  primaryHover: '#4338CA', // Indigo profundo interativo
+  gold: '#C2A478',        // Ouro-champanhe premium para detalhes de destaque
   goldHover: '#D2B78D',   // Ouro-champanhe claro interativo
-  success: '#1EA07E',     // Verde-menta suave de sucesso
-  warning: '#D97706',     // Âmbar elegante
-  error: '#DC2626',       // Vermelho vivo
-  info: '#0D9488',        // Ciano elegante de informação
+  success: '#2B8A3E',     // Verde floresta suave
+  warning: '#E67E22',     // Âmbar quente
+  error: '#C92A2A',       // Carmim de alta legibilidade
+  info: '#1971C2',        // Azul-oceano elegante para info
 };
 
 export const radius = {

@@ -5,39 +5,39 @@ import { storage } from '@/src/utils/storage';
 export type ThemeType = 'light' | 'dark';
 
 export const lightColors = {
-  bg: '#F2F7F8',          // Off-white suave com tom azul-petróleo gelado
-  surface: '#FFFFFF',     // Branco puro para contêineres e cartões
-  surfaceAlt: '#EBF2F4',  // Destaque de superfície sutil e claro
-  border: '#E1ECEF',      // Borda clara integrada ao tema
-  text: '#08282D',        // Azul-petróleo profundo quase preto
-  textSecondary: '#3D5A60', // Azul-petróleo médio para informações secundárias
-  textMuted: '#7B969C',    // Texto atenuado/captions
-  primary: '#0B727F',     // Azul-petróleo rico e sofisticado (Reviver Teal)
-  primaryHover: '#085863', // Destaque escuro interativo
-  gold: '#C2A478',        // Ouro-champanhe premium para contrastes de destaque
+  bg: '#F8F9FA',          // Off-white minimalista e extremamente limpo
+  surface: '#FFFFFF',     // Branco puro para os cartões
+  surfaceAlt: '#F1F3F5',  // Destaque de superfície sutil
+  border: '#E9ECEF',      // Borda sutil e muito limpa
+  text: '#1A1D20',        // Preto-ardósia profundo, muito elegante e legível
+  textSecondary: '#495057', // Cinza-carvão para subtítulos
+  textMuted: '#868E96',    // Cinza atenuado para rótulos secundários
+  primary: '#4F46E5',     // Indigo profundo e nobre (Royal Indigo)
+  primaryHover: '#4338CA', // Indigo profundo interativo
+  gold: '#C2A478',        // Ouro-champanhe premium para detalhes de destaque
   goldHover: '#D2B78D',   // Ouro-champanhe claro interativo
-  success: '#1EA07E',     // Verde-menta suave de sucesso
-  warning: '#D97706',     // Âmbar elegante
-  error: '#DC2626',       // Vermelho vivo
-  info: '#0D9488',        // Ciano elegante de informação
+  success: '#2B8A3E',     // Verde floresta suave
+  warning: '#E67E22',     // Âmbar quente
+  error: '#C92A2A',       // Carmim de alta legibilidade
+  info: '#1971C2',        // Azul-oceano elegante para info
 };
 
 export const darkColors = {
-  bg: '#052429',          // O azul-petróleo de luxo da base da foto
-  surface: '#09343B',     // Superfície de cartão integrada da região média da foto
-  surfaceAlt: '#0D454E',  // Destaque de cartão ativo
-  border: '#125661',      // Bordas sutis integradas
-  text: '#F0FDFA',        // Branco-menta muito suave e premium
-  textSecondary: '#95C1C8', // Ciano pastel para subtítulos e descrições
-  textMuted: '#62939B',    // Texto atenuado no modo escuro
-  primary: '#17B3C4',     // O ciano vibrante/luminoso central do logotipo Reviver
-  primaryHover: '#39C7D6', // Ciano luminoso brilhante ativo
-  gold: '#CCA462',        // Ouro-champanhe de luxo
+  bg: '#090A0F',          // Preto Obsidian profundo com leve tom da meia-noite (luxuoso)
+  surface: '#12141C',     // Carvão metálico rico para cartões e áreas internas
+  surfaceAlt: '#1A1D28',  // Destaque de superfície ativa
+  border: '#222533',      // Borda ultra-fina e luxuosa
+  text: '#F8F9FA',        // Branco-cinza limpo de alto contraste
+  textSecondary: '#ADB5BD', // Prata-cinza metálico para descrições
+  textMuted: '#6C757D',    // Cinza escuro atenuado
+  primary: '#6366F1',     // Indigo elétrico vibrante e moderno
+  primaryHover: '#818CF8', // Indigo luminoso brilhante ativo
+  gold: '#CCA462',        // Ouro-champanhe de luxo metálico
   goldHover: '#DBC08C',   // Ouro-champanhe brilhante ativo
-  success: '#10B981',     // Verde vibrante de sucesso
-  warning: '#F59E0B',     // Laranja vibrante de atenção
-  error: '#EF4444',       // Vermelho vibrante de erro
-  info: '#17B3C4',        // Ciano vibrante
+  success: '#37B24D',     // Verde esmeralda de sucesso
+  warning: '#F59E0B',     // Laranja-âmbar de atenção
+  error: '#F03E3E',       // Vermelho brilhante de erro
+  info: '#339AF0',        // Azul vibrante de info
 };
 
 type ThemeContextType = {
