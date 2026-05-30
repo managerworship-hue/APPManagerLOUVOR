@@ -12,6 +12,13 @@ const appJsonPath = path.join(projectRoot, 'app.json');
 // Helper to get Git commit count
 function getGitCommitCount() {
   try {
+    // Tentar fazer o "unshallow" se o repositório for raso (muito comum no Render, Vercel, etc.)
+    try {
+      execSync('git fetch --unshallow', { stdio: 'ignore' });
+    } catch (unshallowErr) {
+      // Ignora se o repositório já for completo ou se falhar
+    }
+
     const countStr = execSync('git rev-list --count HEAD', { stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8' }).trim();
     const count = parseInt(countStr, 10);
     return isNaN(count) ? null : count;
