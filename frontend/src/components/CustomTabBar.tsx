@@ -66,11 +66,14 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           borderTopColor: colors.surface, // remove border for a cleaner pill
           // Floating pill style
           position: 'absolute',
-          bottom: safeBottom + 12,
+          // Uma margem fixa de 20 aproxima a pílula do fim do ecrã.
+          // No iPhone, o "home indicator" vai ficar elegantemente no espaço
+          // por baixo ou ligeiramente sobreposto à base da pílula.
+          bottom: 20,
           left: 16,
           right: 16,
           borderRadius: 24,
-          paddingBottom: 0, // No extra padding needed because it's floating
+          paddingBottom: 0,
           height: 60,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
