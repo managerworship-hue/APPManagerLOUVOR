@@ -4,6 +4,7 @@ import {
   TouchableOpacity, ActivityIndicator, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
@@ -211,42 +212,52 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {/* Grid de estatísticas */}
+            {/* Grid de estatísticas (Estilo Glassmorphism & Brilho) */}
             <View style={styles.grid}>
-              <TouchableOpacity style={styles.statCard} onPress={() => router.push('/membros')} testID="stat-members">
-                <View style={[styles.statIcon, { backgroundColor: '#F2EBDB' }]}>
-                  {/* item 3: ícone de grupo de pessoas */}
-                  <Ionicons name="people-outline" size={20} color={colors.gold} />
+              <TouchableOpacity style={styles.statCard} onPress={() => router.push('/membros')} testID="stat-members" activeOpacity={0.8}>
+                <LinearGradient colors={['#F6D365', '#FDA085']} style={styles.statIconGradient}>
+                  <Ionicons name="people" size={22} color="#fff" />
+                </LinearGradient>
+                <View style={styles.statTextWrap}>
+                  <Text style={styles.statValue}>{stats?.members ?? 0}</Text>
+                  <Text style={styles.statLabel}>Membros</Text>
                 </View>
-                <Text style={styles.statValue}>{stats?.members ?? 0}</Text>
-                <Text style={styles.statLabel}>Membros</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.statCard} onPress={() => router.push('/(tabs)/repertorio')} testID="stat-songs">
-                <View style={[styles.statIcon, { backgroundColor: '#E6E9F0' }]}>
-                  <Ionicons name="musical-note" size={20} color={colors.primary} />
+
+              <TouchableOpacity style={styles.statCard} onPress={() => router.push('/(tabs)/repertorio')} testID="stat-songs" activeOpacity={0.8}>
+                <LinearGradient colors={['#4facfe', '#00f2fe']} style={styles.statIconGradient}>
+                  <Ionicons name="musical-notes" size={22} color="#fff" />
+                </LinearGradient>
+                <View style={styles.statTextWrap}>
+                  <Text style={styles.statValue}>{stats?.songs ?? 0}</Text>
+                  <Text style={styles.statLabel}>Músicas</Text>
                 </View>
-                <Text style={styles.statValue}>{stats?.songs ?? 0}</Text>
-                <Text style={styles.statLabel}>Músicas</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.statCard} onPress={() => router.push('/(tabs)/escalas')} testID="stat-scales">
-                <View style={[styles.statIcon, { backgroundColor: '#E6F0EA' }]}>
-                  <Ionicons name="calendar-outline" size={20} color={colors.success} />
+
+              <TouchableOpacity style={styles.statCard} onPress={() => router.push('/(tabs)/escalas')} testID="stat-scales" activeOpacity={0.8}>
+                <LinearGradient colors={['#43e97b', '#38f9d7']} style={styles.statIconGradient}>
+                  <Ionicons name="calendar" size={22} color="#fff" />
+                </LinearGradient>
+                <View style={styles.statTextWrap}>
+                  <Text style={styles.statValue}>{stats?.scales ?? 0}</Text>
+                  <Text style={styles.statLabel}>Escalas</Text>
                 </View>
-                <Text style={styles.statValue}>{stats?.scales ?? 0}</Text>
-                <Text style={styles.statLabel}>Escalas</Text>
               </TouchableOpacity>
+
               {/* Avisos: só líder cria */}
               <TouchableOpacity
-                style={styles.statCard}
+                style={[styles.statCard, !isLeader && { opacity: 0.9 }]}
                 onPress={() => isLeader ? router.push('/aviso/novo') : null}
                 testID="stat-announcements"
-                activeOpacity={isLeader ? 0.7 : 1}
+                activeOpacity={isLeader ? 0.8 : 1}
               >
-                <View style={[styles.statIcon, { backgroundColor: '#F2E6E6' }]}>
-                  <Ionicons name="megaphone-outline" size={20} color={colors.error} />
+                <LinearGradient colors={['#ff0844', '#ffb199']} style={styles.statIconGradient}>
+                  <Ionicons name="megaphone" size={22} color="#fff" />
+                </LinearGradient>
+                <View style={styles.statTextWrap}>
+                  <Text style={styles.statValue}>{stats?.announcements ?? 0}</Text>
+                  <Text style={styles.statLabel}>Avisos</Text>
                 </View>
-                <Text style={styles.statValue}>{stats?.announcements ?? 0}</Text>
-                <Text style={styles.statLabel}>Avisos</Text>
               </TouchableOpacity>
             </View>
 
@@ -421,11 +432,41 @@ const getStyles = (colors: any) => StyleSheet.create({
   emptyCard: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, alignItems: 'center', borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
   emptyText: { fontSize: font.body, color: colors.text, fontWeight: '600', marginTop: 8 },
   emptySubtext: { fontSize: font.caption, color: colors.textSecondary, marginTop: 4 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-  statCard: { flexBasis: '48%', flexGrow: 1, backgroundColor: colors.surface, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border },
-  statIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
-  statValue: { fontSize: 24, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
-  statLabel: { fontSize: font.caption, color: colors.textSecondary, marginTop: 2 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.lg },
+  statCard: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)', // Translucent glass effect
+    padding: spacing.lg,
+    borderRadius: 24, // Very rounded
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center', // Center content
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  statIconGradient: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  statTextWrap: {
+    alignItems: 'center',
+  },
+  statValue: { fontSize: 26, fontWeight: '800', color: colors.text, letterSpacing: -0.5 },
+  statLabel: { fontSize: font.caption, color: colors.textSecondary, marginTop: 4, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
   sectionTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text },
   sectionLink: { color: colors.primary, fontWeight: '600', fontSize: font.caption },
