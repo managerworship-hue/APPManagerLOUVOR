@@ -36,9 +36,17 @@ export default function Root({ children }: PropsWithChildren) {
 
         <style dangerouslySetInnerHTML={{
           __html: `
+            :root {
+              --bg-color: #f8fafc; /* light bg */
+            }
+            @media (prefers-color-scheme: dark) {
+              :root {
+                --bg-color: #0f172a; /* dark bg */
+              }
+            }
             html, body, #root {
               height: 100%;
-              background-color: #000;
+              background-color: var(--bg-color);
             }
             * { box-sizing: border-box; }
           `
