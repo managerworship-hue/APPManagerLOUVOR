@@ -35,7 +35,7 @@ export default function TabsLayout() {
 
   const bottomPadding = insets.bottom > 0 
     ? insets.bottom 
-    : (isIOSDevice ? 20 : 8);
+    : (isIOSDevice ? 34 : 16);
 
   return (
     <Tabs
