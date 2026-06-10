@@ -113,6 +113,25 @@ export default function ProfileScreen() {
     }
   };
 
+  const [testingPush, setTestingPush] = useState(false);
+
+  const handleTestPush = async () => {
+    if (Platform.OS !== 'web') return;
+    if (!pushEnabled) {
+      window.alert('Ative as notificações push primeiro.');
+      return;
+    }
+    setTestingPush(true);
+    try {
+      await api('/push/test', { method: 'POST' });
+      window.alert('Solicitação de push enviada! Você deve receber uma notificação de teste em breve.');
+    } catch (e: any) {
+      window.alert('Erro ao enviar notificação de teste: ' + e.message);
+    } finally {
+      setTestingPush(false);
+    }
+  };
+
   // Estados da Integração Google Drive
   const [syncModalVisible, setSyncModalVisible] = useState(false);
   const [clientId, setClientId] = useState('');
@@ -552,6 +571,26 @@ export default function ProfileScreen() {
                   </View>
                   <Ionicons name={pushEnabled ? 'toggle' : 'toggle-outline'} size={28} color={pushEnabled ? colors.success : colors.textMuted} />
                 </TouchableOpacity>
+
+                {pushEnabled && (
+                  <>
+                    <View style={styles.actionDivider} />
+                    <TouchableOpacity style={styles.action} onPress={handleTestPush} disabled={testingPush} activeOpacity={0.7}>
+                      <View style={[styles.actionIcon, { backgroundColor: '#E0F7FA' }]}>
+                        {testingPush ? (
+                          <ActivityIndicator size="small" color={colors.primary} />
+                        ) : (
+                          <Ionicons name="paper-plane-outline" size={18} color={colors.primary} />
+                        )}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.actionTitle}>Testar Notificações Push</Text>
+                        <Text style={styles.actionSubtitle}>Receber uma notificação de teste</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  </>
+                )}
               </>
             )}
 

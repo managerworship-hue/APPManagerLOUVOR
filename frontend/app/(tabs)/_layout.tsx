@@ -27,12 +27,8 @@ export default function TabsLayout() {
 
   const isAndroid = Platform.OS === 'android';
   const isMobileWeb = Platform.OS === 'web' && typeof window !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent);
-  const bottomPadding = isAndroid 
-    ? Math.max(insets.bottom, 24) 
-    : (insets.bottom > 0 ? insets.bottom : (isMobileWeb ? 24 : 8));
-  const tabBarHeight = 62 + (isAndroid 
-    ? Math.max(insets.bottom, 16) 
-    : (insets.bottom > 0 ? insets.bottom : (isMobileWeb ? 16 : 0)));
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : (isAndroid || isMobileWeb ? 20 : 8);
+  const tabBarHeight = 56 + bottomPadding;
 
   return (
     <Tabs
@@ -40,7 +36,7 @@ export default function TabsLayout() {
         headerShown: false,
         lazy: false,
         tabBarActiveTintColor: colors.info,
-        tabBarInactiveTintColor: '#8FA3C8',
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,

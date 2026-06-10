@@ -1219,6 +1219,17 @@ async def push_unsubscribe(user: dict = Depends(get_current_user)):
     await db.push_subscriptions.delete_many({"user_id": user["_id"]})
     return {"ok": True}
 
+@api_router.post("/push/test")
+async def test_push_notification(user: dict = Depends(get_current_user)):
+    """Envia uma notificação de teste push para o utilizador logado."""
+    await send_push_to_users(
+        [user["_id"]],
+        title="Teste de Notificação Push 🔔",
+        body="Funcionou! Seu dispositivo está registrado e a receber notificações push.",
+        url="/perfil"
+    )
+    return {"ok": True}
+
 
 # Include router
 app.include_router(api_router)
