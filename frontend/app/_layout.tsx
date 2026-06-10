@@ -64,14 +64,14 @@ function AppNavigation() {
 function GlobalMusicTexture() {
   const { colors } = useTheme();
   const { width, height } = Dimensions.get('window');
-  const cols = 5;
-  const rows = Math.ceil(height / (width / cols));
+  const cols = 2; // Fewer columns for larger notes
+  const rows = Math.ceil(height / (width / cols)) + 2;
   const notes = ['musical-note', 'musical-notes', 'mic', 'radio'] as const;
 
   return (
-    <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', opacity: 0.03 }]} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', opacity: 0.02 }]} pointerEvents="none">
       {Array.from({ length: rows }).map((_, r) => (
-        <View key={r} style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 40 }}>
+        <View key={r} style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 80 }}>
           {Array.from({ length: cols }).map((_, c) => {
             const iconIndex = (r * cols + c) % notes.length;
             const rotation = (r * 15 + c * 25) % 360;
@@ -79,7 +79,7 @@ function GlobalMusicTexture() {
               <Ionicons
                 key={c}
                 name={notes[iconIndex]}
-                size={30}
+                size={140}
                 color={colors.text}
                 style={{ transform: [{ rotate: `${rotation}deg` }] }}
               />
