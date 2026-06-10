@@ -719,7 +719,7 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>Worship Manager · v{versionData.version}{versionData.build ? ` (${versionData.build})` : ''}</Text>
+        <Text style={styles.version}>Worship Manager · v{versionData.version}</Text>
       </ScrollView>
 
       {/* Modal de avatares */}

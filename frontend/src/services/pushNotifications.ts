@@ -1,6 +1,6 @@
 // frontend/src/services/pushNotifications.ts
 // Web Push API para PWA (Android + iOS 16.4+)
-import { getToken } from '@/src/api/client';
+import { api, getToken } from '@/src/api/client';
 import { storage } from '@/src/utils/storage';
 
 const VAPID_PUBLIC_KEY = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY || '';
@@ -28,18 +28,20 @@ export async function registerPushSubscription(): Promise<boolean> {
 
     const registration = await navigator.serviceWorker.ready;
 
-    // 1. Obter VAPID key
-    let vapidKey = VAPID_PUBLIC_KEY;
-    if (!vapidKey) {
-      try {
-        const res = await fetch(`${API_URL}/api/push/vapid-public-key`);
-        if (res.ok) {
-          const data = await res.json();
-          vapidKey = data.public_key;
-        }
-      } catch (e) {
-        console.error('Erro ao obter VAPID Key do backend:', e);
+    // 1. Obter VAPID key do backend para garantir sincronia (evita mismatch de chaves)
+    let vapidKey = '';
+    try {
+      const res = await fetch(`${API_URL}/api/push/vapid-public-key`);
+      if (res.ok) {
+        const data = await res.json();
+        vapidKey = data.public_key;
       }
+    } catch (e) {
+      console.error('Erro ao obter VAPID Key do backend:', e);
+    }
+
+    if (!vapidKey) {
+      vapidKey = VAPID_PUBLIC_KEY; // Fallback para chave estática
     }
 
     if (!vapidKey) {
@@ -69,16 +71,10 @@ export async function registerPushSubscription(): Promise<boolean> {
       await storage.setItem(SAVED_VAPID_KEY_KEY, vapidKey);
     }
 
-    // Enviar subscrição ao backend
-    const token = await getToken() || '';
-
-    await fetch(`${API_URL}/api/push/subscribe`, {
+    // Enviar subscrição ao backend usando o cliente padronizado
+    await api('/push/subscribe', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(subscription.toJSON()),
+      body: subscription.toJSON(),
     });
 
     console.log('✅ Push subscription registada');

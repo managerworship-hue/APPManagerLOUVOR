@@ -26,9 +26,18 @@ export default function TabsLayout() {
   }
 
   const isAndroid = Platform.OS === 'android';
-  const isMobileWeb = Platform.OS === 'web' && typeof window !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent);
-  const bottomPadding = insets.bottom > 0 ? insets.bottom : (isAndroid || isMobileWeb ? 20 : 8);
-  const tabBarHeight = 56 + bottomPadding;
+  const isIOS = Platform.OS === 'ios';
+  const isAndroidWeb = Platform.OS === 'web' && typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+  const isIOSWeb = Platform.OS === 'web' && typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  const isAndroidDevice = isAndroid || isAndroidWeb;
+  const isIOSDevice = isIOS || isIOSWeb;
+
+  const bottomPadding = insets.bottom > 0 
+    ? insets.bottom 
+    : (isIOSDevice ? 20 : 8);
+
+  const tabBarHeight = isAndroidDevice ? 64 : (56 + bottomPadding);
 
   return (
     <Tabs
@@ -42,7 +51,7 @@ export default function TabsLayout() {
           borderTopColor: colors.border,
           borderTopWidth: 1,
           height: tabBarHeight,
-          paddingBottom: bottomPadding,
+          paddingBottom: isAndroidDevice ? 6 : bottomPadding,
           paddingTop: 8,
         },
         tabBarLabelStyle: {

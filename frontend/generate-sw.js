@@ -6,7 +6,7 @@ const { generateSW } = require('workbox-build');
 const fs = require('fs');
 const path = require('path');
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 
 generateSW({
   globDirectory: 'dist/',
