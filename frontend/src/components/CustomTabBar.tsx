@@ -67,17 +67,19 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           // Forçar position fixed na web para ignorar margins/paddings dos containers pai
           // e posicionar exatamente relativo ao limite físico da tela.
           position: Platform.OS === 'web' ? ('fixed' as any) : 'absolute',
-          bottom: Platform.OS === 'ios' ? 8 : 16,
-          left: 16,
-          right: 16,
-          borderRadius: 24,
-          paddingBottom: 0,
-          height: 60,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          paddingBottom: safeBottom,
+          height: 60 + safeBottom,
+          // Remover sombras fortes do modelo flutuante e usar algo sutil
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
-          elevation: 8,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 6,
+          elevation: 4,
         },
       ]}
     >
