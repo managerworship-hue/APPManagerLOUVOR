@@ -45,7 +45,11 @@ export default function Root({ children }: PropsWithChildren) {
               }
             }
             html, body, #root {
+              /* Fallback para browsers antigos */
               height: 100%;
+              /* Garantir que ocupa o ecrã físico inteiro no iOS PWA */
+              height: 100vh;
+              height: 100dvh;
               background-color: var(--bg-color);
             }
             * { box-sizing: border-box; }
