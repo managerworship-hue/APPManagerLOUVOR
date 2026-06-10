@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
@@ -30,6 +30,7 @@ type Member = { id: string; name: string; instruments: string[]; avatar?: string
 export default function ScaleDetail() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { hasPermission, isLeader } = useAuth();
@@ -94,10 +95,13 @@ export default function ScaleDetail() {
     .map(mid => members.find(m => m.id === mid))
     .filter(Boolean) as Member[];
 
-  const canEdit = isLeader;
+    const canEdit = isLeader;
 
+  // Renderizar ecrã completo com flow suave até ao fundo.
+  // SafeAreaView protege o topo. O padding no fundo do ScrollView garante que a última linha
+  // não fica escondida permanentemente pelo home indicator da PWA.
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity testID="back-button" onPress={() => router.back()} style={styles.headerBtn}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -121,7 +125,7 @@ export default function ScaleDetail() {
         )}
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: Math.max(insets.bottom, spacing.xl) }]}>
         {/* Hero */}
         <View style={styles.hero}>
           <Text style={styles.heroLabel}>EVENTO</Text>
