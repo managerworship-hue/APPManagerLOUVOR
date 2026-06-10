@@ -66,6 +66,13 @@ export default function RepertorioScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <Ionicons
+        name="musical-notes"
+        size={300}
+        color={colors.primary}
+        style={styles.screenWatermark}
+        pointerEvents="none"
+      />
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Repertório</Text>
@@ -163,7 +170,14 @@ export default function RepertorioScreen() {
 }
 
 const getStyles = (colors: any) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1, backgroundColor: colors.bg, position: 'relative' },
+  screenWatermark: {
+    position: 'absolute',
+    bottom: -40,
+    right: -40,
+    opacity: 0.04,
+    zIndex: -1,
+  },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.md, paddingBottom: spacing.sm },
   title: { fontSize: font.h1, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
   subtitle: { fontSize: font.caption, color: colors.textSecondary },

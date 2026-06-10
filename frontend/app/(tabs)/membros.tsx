@@ -111,6 +111,13 @@ export default function MembrosScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <Ionicons
+        name="people"
+        size={300}
+        color={colors.gold}
+        style={styles.screenWatermark}
+        pointerEvents="none"
+      />
       <View style={styles.header}>
         <TouchableOpacity testID="back-button" onPress={() => router.back()} style={styles.headerBtn}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -225,7 +232,14 @@ export default function MembrosScreen() {
 }
 
 const getStyles = (colors: any) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1, backgroundColor: colors.bg, position: 'relative' },
+  screenWatermark: {
+    position: 'absolute',
+    bottom: -40,
+    right: -40,
+    opacity: 0.04,
+    zIndex: -1,
+  },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.sm, paddingVertical: spacing.sm,
