@@ -8,9 +8,41 @@ import { ThemeProvider, useTheme } from '@/src/context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppNavigation />
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function AppNavigation() {
+  const { theme, colors } = useTheme();
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // Sincronizar o fundo do HTML com o tema atual para evitar 
+      // faixas escuras no fundo no iOS (safe area)
+      document.body.style.backgroundColor = colors.bg;
+      document.documentElement.style.backgroundColor = colors.bg;
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', colors.bg);
+      } else {
+        const meta = document.createElement('meta');
+        meta.name = 'theme-color';
+        meta.content = colors.bg;
+        document.head.appendChild(meta);
+      }
+    }
+  }, [colors.bg]);
+
   useEffect(() => {
     // Note: viewport meta, PWA meta tags and safe-area CSS are now in app/+html.tsx
-    // so they are present in the HTML before React renders (critical for useSafeAreaInsets).
     if (Platform.OS === 'web') {
       // Register service worker
       if ('serviceWorker' in navigator) {
@@ -28,20 +60,6 @@ export default function RootLayout() {
       }
     }
   }, []);
-
-  return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <AppNavigation />
-        </AuthProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
-  );
-}
-
-function AppNavigation() {
-  const { theme, colors } = useTheme();
 
   return (
     <>
@@ -69,9 +87,9 @@ function GlobalMusicTexture() {
   const notes = ['musical-note', 'musical-notes', 'mic', 'radio'] as const;
 
   return (
-    <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', opacity: 0.02 }]} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', opacity: 0.04 }]} pointerEvents="none">
       {Array.from({ length: rows }).map((_, r) => (
-        <View key={r} style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 80 }}>
+        <View key={r} style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 120 }}>
           {Array.from({ length: cols }).map((_, c) => {
             const iconIndex = (r * cols + c) % notes.length;
             const rotation = (r * 15 + c * 25) % 360;
@@ -79,7 +97,7 @@ function GlobalMusicTexture() {
               <Ionicons
                 key={c}
                 name={notes[iconIndex]}
-                size={140}
+                size={220}
                 color={colors.text}
                 style={{ transform: [{ rotate: `${rotation}deg` }] }}
               />

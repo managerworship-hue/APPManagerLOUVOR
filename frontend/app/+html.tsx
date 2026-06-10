@@ -30,7 +30,7 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="apple-touch-icon" href="/icons/icon.png" />
 
         {/* Android theme color */}
-        <meta name="theme-color" content="#000000" />
+        {/* Removido, injetado dinamicamente no _layout.tsx para evitar faixas pretas */}
 
         <ScrollViewStyleReset />
 
