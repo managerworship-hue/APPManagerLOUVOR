@@ -37,10 +37,14 @@ export default function TabsLayout() {
     ? insets.bottom 
     : (isIOSDevice ? 34 : 16);
 
-  const tabBarHeight = 54 + bottomPadding;
-
   return (
     <Tabs
+      safeAreaInsets={{
+        bottom: bottomPadding,
+        top: 0,
+        left: 0,
+        right: 0,
+      }}
       screenOptions={{
         headerShown: false,
         lazy: false,
@@ -50,9 +54,6 @@ export default function TabsLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: tabBarHeight,
-          paddingBottom: bottomPadding,
-          paddingTop: 5,
         },
         tabBarLabelStyle: {
           fontSize: 11,
