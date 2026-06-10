@@ -247,7 +247,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   headerBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text },
-  scroll: { padding: spacing.md, paddingBottom: spacing.xl },
+  scroll: { padding: spacing.md, paddingBottom: 120 },
   card: {
     backgroundColor: colors.surface, borderRadius: radius.lg,
     borderWidth: 1, borderColor: colors.border,

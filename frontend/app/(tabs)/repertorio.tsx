@@ -124,7 +124,7 @@ export default function RepertorioScreen() {
         <FlatList
           data={filtered}
           keyExtractor={(i) => i.id}
-          contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
+          contentContainerStyle={{ padding: spacing.md, paddingBottom: 120 }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />

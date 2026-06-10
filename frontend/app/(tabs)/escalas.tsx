@@ -122,7 +122,7 @@ export default function ScalesScreen() {
         <SectionList
           sections={sections}
           keyExtractor={(i) => i.id}
-          contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
+          contentContainerStyle={{ padding: spacing.md, paddingBottom: 120 }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
           stickySectionHeadersEnabled={false}
           renderSectionHeader={({ section }) => {

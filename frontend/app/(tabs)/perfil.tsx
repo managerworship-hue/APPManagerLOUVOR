@@ -1091,7 +1091,7 @@ export default function ProfileScreen() {
 
 const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: spacing.md, paddingBottom: spacing.xl },
+  scroll: { padding: spacing.md, paddingBottom: 120 },
   title: { fontSize: font.h1, fontWeight: '700', color: colors.text, letterSpacing: -0.5, marginBottom: spacing.lg },
   userCard: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.lg, alignItems: 'center', borderWidth: 1, borderColor: colors.border, marginBottom: spacing.lg },
   avatarWrap: { position: 'relative', marginBottom: spacing.sm },

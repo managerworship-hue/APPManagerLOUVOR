@@ -386,7 +386,7 @@ export default function HomeScreen() {
 
 const getStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: spacing.md, paddingBottom: spacing.xl },
+  scroll: { padding: spacing.md, paddingBottom: 120 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
   greeting: { fontSize: font.h2, fontWeight: '700', color: colors.text, letterSpacing: -0.3 },
   ministryName: { fontSize: font.caption, color: colors.textSecondary },
