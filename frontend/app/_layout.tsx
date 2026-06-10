@@ -8,63 +8,10 @@ import { ThemeProvider, useTheme } from '@/src/context/ThemeContext';
 
 export default function RootLayout() {
   useEffect(() => {
+    // Note: viewport meta, PWA meta tags and safe-area CSS are now in app/+html.tsx
+    // so they are present in the HTML before React renders (critical for useSafeAreaInsets).
     if (Platform.OS === 'web') {
-      document.documentElement.lang = 'pt-BR';
-
-      let meta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
-      if (!meta) {
-        meta = document.createElement('meta') as HTMLMetaElement;
-        meta.name = 'viewport';
-        document.head.appendChild(meta);
-      }
-      meta.content =
-        'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover';
-
-      // Configurações de PWA no iOS para tornar a barra de status transparente/escura
-      let appCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]') as HTMLMetaElement | null;
-      if (!appCapable) {
-        appCapable = document.createElement('meta') as HTMLMetaElement;
-        appCapable.name = 'apple-mobile-web-app-capable';
-        document.head.appendChild(appCapable);
-      }
-      appCapable.content = 'yes';
-
-      let statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement | null;
-      if (!statusBarMeta) {
-        statusBarMeta = document.createElement('meta') as HTMLMetaElement;
-        statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
-        document.head.appendChild(statusBarMeta);
-      }
-      statusBarMeta.content = 'black-translucent';
-
-      let themeColorMeta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
-      if (!themeColorMeta) {
-        themeColorMeta = document.createElement('meta') as HTMLMetaElement;
-        themeColorMeta.name = 'theme-color';
-        document.head.appendChild(themeColorMeta);
-      }
-      themeColorMeta.content = '#000000';
-
-      const style = document.createElement('style');
-      style.innerHTML = `
-        html, body {
-          overflow-x: hidden !important;
-          max-width: 100vw !important;
-          width: 100% !important;
-          background-color: #000000 !important;
-        }
-        * { box-sizing: border-box; }
-      `;
-      document.head.appendChild(style);
-
-      let link = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
-      if (!link) {
-        link = document.createElement('link') as HTMLLinkElement;
-        link.rel = 'manifest';
-        document.head.appendChild(link);
-      }
-      link.href = '/manifest.json';
-
+      // Register service worker
       if ('serviceWorker' in navigator) {
         const registerSW = () => {
           navigator.serviceWorker
@@ -72,7 +19,6 @@ export default function RootLayout() {
             .then(reg => console.log('✅ SW registrado:', reg.scope))
             .catch(err => console.error('❌ SW falhou:', err));
         };
-
         if (document.readyState === 'complete') {
           registerSW();
         } else {
