@@ -214,19 +214,19 @@ export default function HomeScreen() {
             {/* Grid de estatísticas (Estilo Marca d'Água Minimalista) */}
             <View style={styles.grid}>
               <TouchableOpacity style={styles.statCard} onPress={() => router.push('/membros')} testID="stat-members" activeOpacity={0.8}>
-                <Ionicons name="people" size={70} color={colors.gold} style={styles.watermarkIcon} />
+                <Ionicons name="people" size={90} color={colors.gold} style={styles.watermarkIcon} />
                 <Text style={styles.statValue}>{stats?.members ?? 0}</Text>
                 <Text style={styles.statLabel}>Membros</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.statCard} onPress={() => router.push('/(tabs)/repertorio')} testID="stat-songs" activeOpacity={0.8}>
-                <Ionicons name="musical-notes" size={70} color={colors.primary} style={styles.watermarkIcon} />
+                <Ionicons name="musical-notes" size={90} color={colors.primary} style={styles.watermarkIcon} />
                 <Text style={styles.statValue}>{stats?.songs ?? 0}</Text>
                 <Text style={styles.statLabel}>Músicas</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.statCard} onPress={() => router.push('/(tabs)/escalas')} testID="stat-scales" activeOpacity={0.8}>
-                <Ionicons name="calendar" size={70} color={colors.success} style={styles.watermarkIcon} />
+                <Ionicons name="calendar" size={90} color={colors.success} style={styles.watermarkIcon} />
                 <Text style={styles.statValue}>{stats?.scales ?? 0}</Text>
                 <Text style={styles.statLabel}>Escalas</Text>
               </TouchableOpacity>
@@ -238,7 +238,7 @@ export default function HomeScreen() {
                 testID="stat-announcements"
                 activeOpacity={isLeader ? 0.8 : 1}
               >
-                <Ionicons name="megaphone" size={70} color={colors.error} style={styles.watermarkIcon} />
+                <Ionicons name="megaphone" size={90} color={colors.error} style={styles.watermarkIcon} />
                 <Text style={styles.statValue}>{stats?.announcements ?? 0}</Text>
                 <Text style={styles.statLabel}>Avisos</Text>
               </TouchableOpacity>
@@ -431,9 +431,9 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   watermarkIcon: {
     position: 'absolute',
-    right: -10,
-    bottom: -15,
-    opacity: 0.12, // Subtle watermark
+    right: -15,
+    bottom: -20,
+    opacity: 0.35, // More visible watermark
   },
   statValue: { fontSize: 32, fontWeight: '800', color: colors.text, letterSpacing: -0.5 },
   statLabel: { fontSize: font.small, color: colors.textSecondary, marginTop: 4, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
