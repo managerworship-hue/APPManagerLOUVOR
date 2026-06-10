@@ -73,38 +73,7 @@ function AppNavigation() {
         <Stack.Screen name="musica/nova" options={{ presentation: 'modal' }} />
         <Stack.Screen name="aviso/novo" options={{ presentation: 'modal' }} />
       </Stack>
-      <GlobalMusicTexture />
     </>
   );
 }
 
-// Render a subtle music pattern overlay on top of the entire app (pointerEvents="none")
-function GlobalMusicTexture() {
-  const { colors } = useTheme();
-  const { width, height } = Dimensions.get('window');
-  const cols = 2; // Fewer columns for larger notes
-  const rows = Math.ceil(height / (width / cols)) + 2;
-  const notes = ['musical-note', 'musical-notes', 'mic', 'radio'] as const;
-
-  return (
-    <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', opacity: 0.04 }]} pointerEvents="none">
-      {Array.from({ length: rows }).map((_, r) => (
-        <View key={r} style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 120 }}>
-          {Array.from({ length: cols }).map((_, c) => {
-            const iconIndex = (r * cols + c) % notes.length;
-            const rotation = (r * 15 + c * 25) % 360;
-            return (
-              <Ionicons
-                key={c}
-                name={notes[iconIndex]}
-                size={220}
-                color={colors.text}
-                style={{ transform: [{ rotate: `${rotation}deg` }] }}
-              />
-            );
-          })}
-        </View>
-      ))}
-    </View>
-  );
-}
