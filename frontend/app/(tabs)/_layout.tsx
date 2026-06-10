@@ -37,7 +37,7 @@ export default function TabsLayout() {
     ? insets.bottom 
     : (isIOSDevice ? 20 : 8);
 
-  const tabBarHeight = isAndroidDevice ? 64 : (56 + bottomPadding);
+  const tabBarHeight = 64 + bottomPadding;
 
   return (
     <Tabs
@@ -51,7 +51,7 @@ export default function TabsLayout() {
           borderTopColor: colors.border,
           borderTopWidth: 1,
           height: tabBarHeight,
-          paddingBottom: isAndroidDevice ? 6 : bottomPadding,
+          paddingBottom: bottomPadding,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
