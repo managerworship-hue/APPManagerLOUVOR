@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/context/AuthContext';
 import { useTheme } from '@/src/context/ThemeContext';
 
+const TAB_BAR_BASE_HEIGHT = 56;
+
 export default function TabsLayout() {
   const { colors } = useTheme();
   const router = useRouter();
@@ -25,26 +27,20 @@ export default function TabsLayout() {
     );
   }
 
-  const isAndroid = Platform.OS === 'android';
-  const isIOS = Platform.OS === 'ios';
-  const isAndroidWeb = Platform.OS === 'web' && typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-  const isIOSWeb = Platform.OS === 'web' && typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  // Detect platform for fallback
+  const isWeb = Platform.OS === 'web';
+  const isIOSWeb = isWeb && typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroidWeb = isWeb && typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
 
-  const isAndroidDevice = isAndroid || isAndroidWeb;
-  const isIOSDevice = isIOS || isIOSWeb;
+  // Safe area bottom: use insets when available, otherwise use platform fallback
+  const safeBottom = insets.bottom > 0
+    ? insets.bottom
+    : (Platform.OS === 'ios' || isIOSWeb ? 20 : 0);
 
-  const bottomPadding = insets.bottom > 0 
-    ? insets.bottom 
-    : (isIOSDevice ? 34 : 16);
+  const tabBarHeight = TAB_BAR_BASE_HEIGHT + safeBottom;
 
   return (
     <Tabs
-      safeAreaInsets={{
-        bottom: bottomPadding,
-        top: 0,
-        left: 0,
-        right: 0,
-      }}
       screenOptions={{
         headerShown: false,
         lazy: false,
@@ -54,11 +50,16 @@ export default function TabsLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
+          height: tabBarHeight,
+          paddingBottom: safeBottom,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
           letterSpacing: 0.3,
+        },
+        tabBarIconStyle: {
           marginTop: 2,
         },
       }}
