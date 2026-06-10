@@ -63,9 +63,20 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         styles.container,
         {
           backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          // paddingBottom guarantees the home indicator / gesture bar is clear
-          paddingBottom: safeBottom + 6,
+          borderTopColor: colors.surface, // remove border for a cleaner pill
+          // Floating pill style
+          position: 'absolute',
+          bottom: safeBottom + 12,
+          left: 16,
+          right: 16,
+          borderRadius: 24,
+          paddingBottom: 0, // No extra padding needed because it's floating
+          height: 60,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+          elevation: 8,
         },
       ]}
     >
@@ -118,16 +129,14 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 10,
-    // No overflow:hidden — labels must never be clipped
+    // No top border, it's a pill now
+    paddingTop: 0,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'center', // Center vertically
     gap: 3,
-    paddingBottom: 2,
   },
   label: {
     fontSize: 11,

@@ -31,6 +31,9 @@ export default function TabsLayout() {
       // Evitar que o React Navigation empurre a tab bar para cima
       // expondo o background escuro da página HTML por baixo
       safeAreaInsets={{ bottom: 0, top: 0, left: 0, right: 0 }}
+      // Como a tab bar agora é flutuante (absolute), precisamos dar padding no fundo
+      // das páginas para o conteúdo não ficar escondido permanentemente por trás dela
+      sceneContainerStyle={{ paddingBottom: 100 }}
       screenOptions={{
         headerShown: false,
         lazy: false,
