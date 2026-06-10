@@ -102,6 +102,13 @@ export default function AvisoDetail() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <Ionicons
+        name="megaphone"
+        size={300}
+        color={colors.error}
+        style={styles.screenWatermark}
+        pointerEvents="none"
+      />
       <View style={styles.header}>
         <TouchableOpacity testID="back-button" onPress={() => router.back()} style={styles.headerBtn}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -202,7 +209,14 @@ export default function AvisoDetail() {
 }
 
 const getStyles = (colors: any) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1, backgroundColor: colors.bg, position: 'relative' },
+  screenWatermark: {
+    position: 'absolute',
+    bottom: -40,
+    right: -40,
+    opacity: 0.04,
+    zIndex: -1,
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
   headerBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
