@@ -87,7 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }).catch(async (err) => {
           console.log('Erro ao revalidar sessão:', err);
           // Se for erro de autenticação, desconecta
-          if (err.message?.includes('401') || err.message?.includes('não autenticado') || err.message?.includes('token')) {
+          const errMsg = err.message?.toLowerCase() || '';
+          if (
+            err.status === 401 ||
+            errMsg.includes('401') ||
+            errMsg.includes('não autenticado') ||
+            errMsg.includes('token')
+          ) {
             await clearToken();
             await Promise.all([
               storage.removeItem('cached_user'),

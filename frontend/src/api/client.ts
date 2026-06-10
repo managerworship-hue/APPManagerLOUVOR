@@ -22,6 +22,15 @@ export async function clearToken(): Promise<void> {
   await storage.removeItem(TOKEN_KEY);
 }
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+    this.name = 'ApiError';
+  }
+}
+
 export async function api<T = any>(path: string, opts: ApiOptions = {}): Promise<T> {
   const { method = 'GET', body, auth = true } = opts;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -39,7 +48,7 @@ export async function api<T = any>(path: string, opts: ApiOptions = {}): Promise
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!res.ok) {
     const detail = data?.detail || data?.message || `Erro ${res.status}`;
-    throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+    throw new ApiError(typeof detail === 'string' ? detail : JSON.stringify(detail), res.status);
   }
   return data as T;
 }

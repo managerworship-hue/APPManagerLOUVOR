@@ -34,42 +34,49 @@ JWT_SECRET = os.environ['JWT_SECRET']
 JWT_ALGORITHM = os.environ.get('JWT_ALGORITHM', 'HS256')
 JWT_EXPIRE_MINUTES = int(os.environ.get('JWT_EXPIRE_MINUTES', '10080'))
 
-# VAPID para Web Push (gera em https://vapidkeys.com ou com npx web-push generate-vapid-keys)
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
 VAPID_CLAIMS = {"sub": "mailto:admin@worshipmanager.com"}
+_background_tasks = set()
 
 async def send_push_to_users(user_ids: List[str], title: str, body: str, url: str = '/'):
-    """Envia notificação push a uma lista de utilizadores pelo ID."""
-    if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
-        logger.warning("VAPID keys não configuradas — notificações push desativadas")
-        return
-    try:
-        from pywebpush import webpush, WebPushException
-    except ImportError:
-        logger.warning("pywebpush não instalado — adicione ao requirements.txt")
-        return
-
-    payload = json.dumps({"title": title, "body": body, "url": url})
-
-    # Buscar subscrições dos utilizadores
-    subs = await db.push_subscriptions.find({"user_id": {"$in": user_ids}}).to_list(None)
-
-    for sub in subs:
+    """Envia notificação push a uma lista de utilizadores pelo ID de forma assíncrona e não-bloqueante."""
+    async def _do_send():
+        if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
+            logger.warning("VAPID keys não configuradas — notificações push desativadas")
+            return
         try:
-            # Executar chamada de rede síncrona em segundo plano (thread) para não travar o event loop
-            await asyncio.to_thread(
-                webpush,
-                subscription_info=sub["subscription"],
-                data=payload,
-                vapid_private_key=VAPID_PRIVATE_KEY,
-                vapid_claims=VAPID_CLAIMS,
-            )
-        except Exception as e:
-            logger.error(f"Erro ao enviar push para {sub.get('user_id')}: {e}", exc_info=True)
-            # Remover subscrição inválida
-            if "410" in str(e) or "404" in str(e):
-                await db.push_subscriptions.delete_one({"_id": sub["_id"]})
+            from pywebpush import webpush
+        except ImportError:
+            logger.warning("pywebpush não instalado — adicione ao requirements.txt")
+            return
+
+        payload = json.dumps({"title": title, "body": body, "url": url})
+
+        try:
+            # Buscar subscrições dos utilizadores
+            subs = await db.push_subscriptions.find({"user_id": {"$in": user_ids}}).to_list(None)
+            for sub in subs:
+                try:
+                    # Executar chamada de rede síncrona em segundo plano (thread) para não travar o event loop
+                    await asyncio.to_thread(
+                        webpush,
+                        subscription_info=sub["subscription"],
+                        data=payload,
+                        vapid_private_key=VAPID_PRIVATE_KEY,
+                        vapid_claims=VAPID_CLAIMS,
+                    )
+                except Exception as e:
+                    logger.error(f"Erro ao enviar push para {sub.get('user_id')}: {e}", exc_info=True)
+                    # Remover subscrição inválida
+                    if "410" in str(e) or "404" in str(e):
+                        await db.push_subscriptions.delete_one({"_id": sub["_id"]})
+        except Exception as outer_err:
+            logger.error(f"Erro geral no envio de push em background: {outer_err}", exc_info=True)
+
+    task = asyncio.create_task(_do_send())
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
 
 # DB
 client = AsyncIOMotorClient(
