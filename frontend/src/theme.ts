@@ -1,19 +1,19 @@
 export const colors = {
-  bg: '#F8F9FA',          // Off-white minimalista e extremamente limpo
-  surface: '#FFFFFF',     // Branco puro para os cartões
-  surfaceAlt: '#F1F3F5',  // Destaque de superfície sutil
-  border: '#E9ECEF',      // Borda sutil e muito limpa
-  text: '#1A1D20',        // Preto-ardósia profundo, muito elegante e legível
-  textSecondary: '#495057', // Cinza-carvão para subtítulos
-  textMuted: '#868E96',    // Cinza atenuado para rótulos secundários
-  primary: '#4F46E5',     // Indigo profundo e nobre (Royal Indigo)
-  primaryHover: '#4338CA', // Indigo profundo interativo
-  gold: '#C2A478',        // Ouro-champanhe premium para detalhes de destaque
-  goldHover: '#D2B78D',   // Ouro-champanhe claro interativo
-  success: '#2B8A3E',     // Verde floresta suave
-  warning: '#E67E22',     // Âmbar quente
-  error: '#C92A2A',       // Carmim de alta legibilidade
-  info: '#1971C2',        // Azul-oceano elegante para info
+  bg: '#F5F7FB',          // Off-white acinzentado sutil (fundo da foto)
+  surface: '#FFFFFF',     // Branco puro para cartões
+  surfaceAlt: '#E9ECEF',  // Superfície alternativa
+  border: '#E2E8F0',      // Borda sutil
+  text: '#1A202C',        // Cinza escuro/ardósia profundo para texto principal
+  textSecondary: '#4A5568', // Texto secundário
+  textMuted: '#A0AEC0',    // Texto silenciado
+  primary: '#00ACC1',     // Ciano brilhante da foto (active link/progress bar)
+  primaryHover: '#0097A7', // Ciano ligeiramente mais escuro
+  gold: '#CCA462',        // Ouro champanhe metálico
+  goldHover: '#DBC08C',   // Ouro champanhe ativo
+  success: '#2ECC71',     // Verde sucesso
+  warning: '#F39C12',     // Laranja atenção
+  error: '#E74C3C',       // Vermelho erro
+  info: '#00ACC1',        // Ciano
 };
 
 export const radius = {
