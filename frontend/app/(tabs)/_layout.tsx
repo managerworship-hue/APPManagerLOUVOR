@@ -37,9 +37,15 @@ export default function TabsLayout() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
+          // lineHeight explícito garante que o container de texto tem altura
+          // suficiente e não corta os caracteres na base
+          lineHeight: 14,
           // includeFontPadding:false elimina o padding interno do Android
-          // que empurrava o texto contra a borda inferior do container
           includeFontPadding: false,
+        },
+        // paddingBottom no item afasta o conteúdo (ícone+label) da borda inferior
+        tabBarItemStyle: {
+          paddingBottom: 3,
         },
         // Impede que o tamanho de fonte do sistema afete os labels da tab bar
         tabBarAllowFontScaling: false,
