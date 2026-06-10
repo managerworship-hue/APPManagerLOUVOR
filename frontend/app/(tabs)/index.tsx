@@ -4,7 +4,6 @@ import {
   TouchableOpacity, ActivityIndicator, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '@/src/api/client';
@@ -212,36 +211,24 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {/* Grid de estatísticas (Estilo Glassmorphism & Brilho) */}
+            {/* Grid de estatísticas (Estilo Marca d'Água Minimalista) */}
             <View style={styles.grid}>
               <TouchableOpacity style={styles.statCard} onPress={() => router.push('/membros')} testID="stat-members" activeOpacity={0.8}>
-                <LinearGradient colors={['#F6D365', '#FDA085']} style={styles.statIconGradient}>
-                  <Ionicons name="people" size={22} color="#fff" />
-                </LinearGradient>
-                <View style={styles.statTextWrap}>
-                  <Text style={styles.statValue}>{stats?.members ?? 0}</Text>
-                  <Text style={styles.statLabel}>Membros</Text>
-                </View>
+                <Ionicons name="people" size={70} color={colors.gold} style={styles.watermarkIcon} />
+                <Text style={styles.statValue}>{stats?.members ?? 0}</Text>
+                <Text style={styles.statLabel}>Membros</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.statCard} onPress={() => router.push('/(tabs)/repertorio')} testID="stat-songs" activeOpacity={0.8}>
-                <LinearGradient colors={['#4facfe', '#00f2fe']} style={styles.statIconGradient}>
-                  <Ionicons name="musical-notes" size={22} color="#fff" />
-                </LinearGradient>
-                <View style={styles.statTextWrap}>
-                  <Text style={styles.statValue}>{stats?.songs ?? 0}</Text>
-                  <Text style={styles.statLabel}>Músicas</Text>
-                </View>
+                <Ionicons name="musical-notes" size={70} color={colors.primary} style={styles.watermarkIcon} />
+                <Text style={styles.statValue}>{stats?.songs ?? 0}</Text>
+                <Text style={styles.statLabel}>Músicas</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.statCard} onPress={() => router.push('/(tabs)/escalas')} testID="stat-scales" activeOpacity={0.8}>
-                <LinearGradient colors={['#43e97b', '#38f9d7']} style={styles.statIconGradient}>
-                  <Ionicons name="calendar" size={22} color="#fff" />
-                </LinearGradient>
-                <View style={styles.statTextWrap}>
-                  <Text style={styles.statValue}>{stats?.scales ?? 0}</Text>
-                  <Text style={styles.statLabel}>Escalas</Text>
-                </View>
+                <Ionicons name="calendar" size={70} color={colors.success} style={styles.watermarkIcon} />
+                <Text style={styles.statValue}>{stats?.scales ?? 0}</Text>
+                <Text style={styles.statLabel}>Escalas</Text>
               </TouchableOpacity>
 
               {/* Avisos: só líder cria */}
@@ -251,13 +238,9 @@ export default function HomeScreen() {
                 testID="stat-announcements"
                 activeOpacity={isLeader ? 0.8 : 1}
               >
-                <LinearGradient colors={['#ff0844', '#ffb199']} style={styles.statIconGradient}>
-                  <Ionicons name="megaphone" size={22} color="#fff" />
-                </LinearGradient>
-                <View style={styles.statTextWrap}>
-                  <Text style={styles.statValue}>{stats?.announcements ?? 0}</Text>
-                  <Text style={styles.statLabel}>Avisos</Text>
-                </View>
+                <Ionicons name="megaphone" size={70} color={colors.error} style={styles.watermarkIcon} />
+                <Text style={styles.statValue}>{stats?.announcements ?? 0}</Text>
+                <Text style={styles.statLabel}>Avisos</Text>
               </TouchableOpacity>
             </View>
 
@@ -436,37 +419,24 @@ const getStyles = (colors: any) => StyleSheet.create({
   statCard: {
     flexBasis: '47%',
     flexGrow: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)', // Translucent glass effect
+    backgroundColor: colors.surface,
     padding: spacing.lg,
-    borderRadius: 24, // Very rounded
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    alignItems: 'center', // Center content
+    borderColor: colors.border,
+    alignItems: 'flex-start', // Left aligned
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
+    position: 'relative',
+    overflow: 'hidden', // Keep watermark inside
   },
-  statIconGradient: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
+  watermarkIcon: {
+    position: 'absolute',
+    right: -10,
+    bottom: -15,
+    opacity: 0.12, // Subtle watermark
   },
-  statTextWrap: {
-    alignItems: 'center',
-  },
-  statValue: { fontSize: 26, fontWeight: '800', color: colors.text, letterSpacing: -0.5 },
-  statLabel: { fontSize: font.caption, color: colors.textSecondary, marginTop: 4, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
+  statValue: { fontSize: 32, fontWeight: '800', color: colors.text, letterSpacing: -0.5 },
+  statLabel: { fontSize: font.small, color: colors.textSecondary, marginTop: 4, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
   sectionTitle: { fontSize: font.h3, fontWeight: '700', color: colors.text },
   sectionLink: { color: colors.primary, fontWeight: '600', fontSize: font.caption },
